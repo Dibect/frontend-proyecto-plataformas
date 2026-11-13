@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "NiJhJI39O9E=",
+  "dgSpecHash": "PZt1gmINroY=",
   "success": true,
-  "projectFilePath": "C:\\Users\\M\\Downloads\\frontend-proyecto-plataformas-main\\frontend-proyecto-plataformas-main\\Dumbo.API\\Dumbo.API.csproj",
+  "projectFilePath": "C:\\Users\\M\\Downloads\\frontend-proyecto-plataformas\\Dumbo.API\\Dumbo.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\M\\.nuget\\packages\\azure.core\\1.41.0\\azure.core.1.41.0.nupkg.sha512",
     "C:\\Users\\M\\.nuget\\packages\\azure.identity\\1.12.1\\azure.identity.1.12.1.nupkg.sha512",
