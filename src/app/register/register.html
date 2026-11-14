@@ -1,42 +1,86 @@
-<div class="register-container">
-  <h2>Crear Cuenta (Dumbo)</h2>
-  
+<main class="register-container">
+  <h2>{{ modo() === 'trabajador' ? 'Registrar cliente' : 'Regístrate' }}</h2>
+
+  @if (successMessage()) {
+    <div class="alert alert-success" role="status">{{ successMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-error" role="alert">{{ errorMessage() }}</div>
+  }
+
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    
     <div class="form-group">
-      <label for="nombre">Nombre</label>
-      <input id="nombre" type="text" formControlName="nombre" placeholder="Ingresa tu nombre">
+      <label for="rut">RUT</label>
+      <input id="rut" type="text" formControlName="rut" (blur)="onRutBlur()"
+             [attr.aria-invalid]="form.controls.rut.invalid && form.controls.rut.touched">
+      @if (form.controls.rut.touched && form.controls.rut.errors?.['required']) {
+        <span class="error-message">El RUT es obligatorio</span>
+      }
+      @if (form.controls.rut.touched && form.controls.rut.errors?.['rut']) {
+        <span class="error-message">RUT inválido, revisa el dígito verificador</span>
+      }
     </div>
 
     <div class="form-group">
-      <label for="correo">Correo</label>
-      <input id="correo" type="email" formControlName="correo" placeholder="correo@ejemplo.com">
+      <label for="nombres">Nombres</label>
+      <input id="nombres" type="text" formControlName="nombres" autocomplete="given-name"
+             [attr.aria-invalid]="form.controls.nombres.invalid && form.controls.nombres.touched">
+      @if (form.controls.nombres.touched && form.controls.nombres.errors?.['required']) {
+        <span class="error-message">Los nombres son obligatorios</span>
+      }
+      @if (form.controls.nombres.touched && (form.controls.nombres.errors?.['minlength'] || form.controls.nombres.errors?.['maxlength'])) {
+        <span class="error-message">Debe tener entre 2 y 60 caracteres</span>
+      }
     </div>
 
     <div class="form-group">
-      <label for="contrasena">Contraseña</label>
-      <input id="contrasena" type="password" formControlName="contrasena" placeholder="Mínimo 6 caracteres">
+      <label for="apellidos">Apellidos</label>
+      <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name"
+             [attr.aria-invalid]="form.controls.apellidos.invalid && form.controls.apellidos.touched">
+      @if (form.controls.apellidos.touched && form.controls.apellidos.errors?.['required']) {
+        <span class="error-message">Los apellidos son obligatorios</span>
+      }
+      @if (form.controls.apellidos.touched && (form.controls.apellidos.errors?.['minlength'] || form.controls.apellidos.errors?.['maxlength'])) {
+        <span class="error-message">Debe tener entre 2 y 60 caracteres</span>
+      }
     </div>
 
     <div class="form-group">
-      <label for="confirmarContrasena">Confirmar Contraseña</label>
-      <input id="confirmarContrasena" type="password" formControlName="confirmarContrasena" placeholder="Repite tu contraseña">
+      <label for="telefono">Teléfono</label>
+      <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="+56 9 1234 5678"
+             [attr.aria-invalid]="form.controls.telefono.invalid && form.controls.telefono.touched">
+      @if (form.controls.telefono.touched && form.controls.telefono.errors?.['required']) {
+        <span class="error-message">El teléfono es obligatorio</span>
+      }
+      @if (form.controls.telefono.touched && form.controls.telefono.errors?.['telefono']) {
+        <span class="error-message">Ingresa un celular chileno válido, ej. +56 9 1234 5678</span>
+      }
     </div>
 
-    <!-- Mensaje de error reactivo con Signals -->
-    @if (errorMessage()) {
-      <div class="error-message">
-        {{ errorMessage() }}
-      </div>
-    }
+    <div class="form-group">
+      <label for="correo">Correo electrónico</label>
+      <input id="correo" type="email" formControlName="correo" autocomplete="email"
+             [attr.aria-invalid]="form.controls.correo.invalid && form.controls.correo.touched">
+      @if (form.controls.correo.touched && form.controls.correo.errors?.['required']) {
+        <span class="error-message">El correo es obligatorio</span>
+      }
+      @if (form.controls.correo.touched && form.controls.correo.errors?.['email']) {
+        <span class="error-message">Correo inválido</span>
+      }
+    </div>
+
+    <p class="help-text">Tu contraseña inicial será tu RUT sin puntos ni guion.</p>
 
     <button type="submit" [disabled]="form.invalid || loading()">
-      {{ loading() ? 'Registrando...' : 'Registrarse' }}
+      {{ loading() ? 'Cargando...' : 'Registrar' }}
     </button>
-
   </form>
-  
+
   <div class="login-link">
-    ¿Ya tienes cuenta? <a routerLink="/login">Inicia sesión aquí</a>
+    @if (modo() === 'autoregistro') {
+      <a routerLink="/login">¿Ya tienes cuenta? Inicia sesión</a>
+    } @else {
+      <a routerLink="/trabajador">Volver al panel</a>
+    }
   </div>
-</div>
+</main>
