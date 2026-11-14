@@ -1,0 +1,60 @@
+<main class="lista-container">
+  <header class="lista-header">
+    <h2>Trabajadores</h2>
+    <a routerLink="/admin">Volver al panel</a>
+  </header>
+
+  @if (loading()) {
+    <p class="estado" role="status">Cargando trabajadores...</p>
+  } @else if (errorMessage()) {
+    <div class="alert alert-error" role="alert">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else if (trabajadores().length === 0) {
+    <p class="estado">Aún no hay trabajadores registrados.</p>
+  } @else {
+    <div class="toolbar">
+      <label for="filtro" class="sr-only">Buscar trabajador</label>
+      <input id="filtro" type="search" placeholder="Buscar por RUT, nombre o correo"
+             [value]="filtro()" (input)="onFiltro($event)">
+      <span class="contador" aria-live="polite">
+        {{ trabajadoresFiltrados().length }} de {{ trabajadores().length }}
+      </span>
+    </div>
+
+    @if (trabajadoresFiltrados().length === 0) {
+      <p class="estado">Ningún trabajador coincide con «{{ filtro() }}».</p>
+    } @else {
+      <div class="tabla-wrapper">
+        <table>
+          <caption class="sr-only">Listado de trabajadores</caption>
+          <thead>
+            <tr>
+              <th scope="col">RUT</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Correo</th>
+              <th scope="col">Teléfono</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of trabajadoresFiltrados(); track t.id) {
+              <tr>
+                <td>{{ formatearRut(t.rut) }}</td>
+                <td>{{ t.nombres }} {{ t.apellidos }}</td>
+                <td>{{ t.correo }}</td>
+                <td>{{ t.telefono }}</td>
+                <td>
+                  <span class="badge" [class.badge-activo]="t.activo" [class.badge-deshabilitado]="!t.activo">
+                    {{ t.activo ? 'Activo' : 'Deshabilitado' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</main>
