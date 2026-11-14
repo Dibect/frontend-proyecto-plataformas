@@ -18,6 +18,14 @@ export interface AuthResponse {
   usuario: Usuario;
 }
 
+export interface RegistroRequest {
+  rut: string;
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  correo: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
@@ -25,14 +33,37 @@ export class AuthService {
 
   readonly token = signal<string | null>(localStorage.getItem('dumbo_token'));
   readonly user = signal<Usuario | null>(this.loadUserFromStorage());
-  
+
   readonly isAuthenticated = computed(() => !!this.token());
   readonly role = computed(() => this.user()?.rol ?? null);
 
   login(correo: string, contrasena: string) {
     return this.http.post<AuthResponse>(`${API_URL}/login`, { correo, contrasena }).pipe(
-      tap(res => this.setSession(res)),
-      catchError(err => throwError(() => err.error?.message || 'Error de conexión'))
+      tap((res) => this.setSession(res)),
+      catchError((err) =>
+        throwError(() => {
+          if (err.error?.message) return err.error.message;
+          if (err.status === 401)
+            return 'Las credenciales de acceso son incorrectas o el usuario no está registrado en el sistema';
+          if (err.status === 403) return 'Usuario deshabilitado';
+          return 'Error de conexión';
+        })
+      )
+    );
+  }
+
+  // Se asume el siguiente contrato con el backend:
+  // POST /api/autenticacion/register sin contraseña en el body.
+  // Respuestas: 201 éxito, 400/409 error (ej. RUT ya registrado).
+  register(data: RegistroRequest) {
+    return this.http.post(`${API_URL}/register`, data).pipe(
+      catchError((err) =>
+        throwError(() => {
+          if (err.error?.message) return err.error.message;
+          if (err.status === 409) return 'El RUT o el correo ya está registrado.';
+          return 'No pudimos completar el registro. Intenta nuevamente.';
+        })
+      )
     );
   }
 
