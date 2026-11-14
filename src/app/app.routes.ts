@@ -16,6 +16,13 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] },
   },
   {
+    path: 'admin/trabajadores',
+    loadComponent: () =>
+      import('./admin/trabajadores/trabajadores-lista').then((m) => m.TrabajadoresLista),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'] },
+  },
+  {
     path: 'trabajador',
     loadComponent: () => import('./trabajador/trabajador').then((m) => m.Trabajador),
     canActivate: [authGuard, roleGuard],
