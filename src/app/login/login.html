@@ -1,0 +1,25 @@
+<main style="max-width: 400px; margin: 50px auto; font-family: sans-serif;">
+  <h2>Iniciar Sesión (Dumbo)</h2>
+  
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div style="margin-bottom: 1rem;">
+      <label for="correo" style="display: block;">Correo</label>
+      <input id="correo" type="email" formControlName="correo" style="width: 100%; padding: 8px;">
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label for="contrasena" style="display: block;">Contraseña</label>
+      <input id="contrasena" type="password" formControlName="contrasena" autocomplete="current-password" style="width: 100%; padding: 8px;">
+    </div>
+
+    @if (errorMessage()) {
+      <div role="alert" style="color: white; background: #e74c3c; padding: 10px; margin-bottom: 1rem; border-radius: 4px;">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <button type="submit" [disabled]="form.invalid || loading()" style="width: 100%; padding: 10px; background: #3498db; color: white; border: none; cursor: pointer;">
+      {{ loading() ? 'Cargando...' : 'Entrar' }}
+    </button>
+  </form>
+</main>
