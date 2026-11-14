@@ -2,13 +2,13 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
-import { API_URL } from '../api.config';
+import { API_BASE } from '../api.config';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.token();
 
-  if (token && req.url.startsWith(API_URL)) {
+  if (token && req.url.startsWith(API_BASE)) {
     req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
   }
 
