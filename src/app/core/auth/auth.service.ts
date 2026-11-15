@@ -1,8 +1,8 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
+import { throwError, of, Observable } from 'rxjs';
 import { API_URL } from '../api.config';
 
 export interface Usuario {
@@ -52,9 +52,6 @@ export class AuthService {
     );
   }
 
-  // Se asume el siguiente contrato con el backend:
-  // POST /api/autenticacion/register sin contraseña en el body.
-  // Respuestas: 201 éxito, 400/409 error (ej. RUT ya registrado).
   register(data: RegistroRequest) {
     return this.http.post(`${API_URL}/register`, data).pipe(
       catchError((err) =>
@@ -65,6 +62,46 @@ export class AuthService {
         })
       )
     );
+  }
+
+  solicitarRecuperacion(correo: string): Observable<void> {
+    return this.http
+      .post<void>(`${API_URL}/recuperar-contrasena`, { correo: correo.trim() })
+      .pipe(
+        map(() => undefined),
+        catchError((err: HttpErrorResponse) => {
+          if (err.status === 404) {
+            return of(undefined);
+          }
+          return throwError(() => {
+            if (err.status === 0) {
+              return 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
+            }
+            if (err.error?.message) return err.error.message;
+            return 'No pudimos procesar la solicitud. Inténtalo más tarde.';
+          });
+        })
+      );
+  }
+
+  restablecerContrasena(token: string, nuevaContrasena: string): Observable<void> {
+    return this.http
+      .post<void>(`${API_URL}/restablecer-contrasena`, { token, nuevaContrasena })
+      .pipe(
+        map(() => undefined),
+        catchError((err: HttpErrorResponse) =>
+          throwError(() => {
+            if (err.status === 0) {
+              return 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
+            }
+            if (err.error?.message) return err.error.message;
+            if (err.status === 400) {
+              return 'El enlace de recuperación es inválido o ha expirado. Solicita uno nuevo.';
+            }
+            return 'No pudimos restablecer tu contraseña. Inténtalo nuevamente.';
+          })
+        )
+      );
   }
 
   logout() {

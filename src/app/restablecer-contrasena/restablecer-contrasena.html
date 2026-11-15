@@ -1,0 +1,84 @@
+<main class="auth-container">
+  <h2>Restablecer contraseña</h2>
+
+  @if (!token()) {
+    <div class="alert alert-error" role="alert">
+      El enlace de recuperación no es válido o no contiene un código de verificación.
+    </div>
+    <div class="auth-links">
+      <a routerLink="/recuperar-contrasena">Solicitar un nuevo enlace de recuperación</a>
+    </div>
+  } @else {
+    <p class="help-text">
+      Ingresa tu nueva contraseña (más de {{ passwordN }} caracteres, al menos una mayúscula y un
+      número).
+    </p>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        {{ errorMessage() }}
+        <div class="alert-link">
+          <a routerLink="/recuperar-contrasena">Solicitar otro correo de recuperación</a>
+        </div>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="nuevaContrasena">Nueva contraseña</label>
+        <input
+          id="nuevaContrasena"
+          type="password"
+          formControlName="nuevaContrasena"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            form.controls.nuevaContrasena.invalid && form.controls.nuevaContrasena.touched
+          "
+        />
+        @if (
+          form.controls.nuevaContrasena.touched &&
+          form.controls.nuevaContrasena.errors?.['required']
+        ) {
+          <span class="error-message" role="alert">La nueva contraseña es obligatoria</span>
+        }
+        @if (
+          form.controls.nuevaContrasena.touched &&
+          form.controls.nuevaContrasena.errors?.['contrasenaInsegura']
+        ) {
+          <span class="error-message" role="alert">{{ mensajePasswordInsegura }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="confirmarContrasena">Confirmar nueva contraseña</label>
+        <input
+          id="confirmarContrasena"
+          type="password"
+          formControlName="confirmarContrasena"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            (form.controls.confirmarContrasena.invalid || form.errors?.['noCoinciden']) &&
+            form.controls.confirmarContrasena.touched
+          "
+        />
+        @if (
+          form.controls.confirmarContrasena.touched &&
+          form.controls.confirmarContrasena.errors?.['required']
+        ) {
+          <span class="error-message" role="alert">Debes confirmar la nueva contraseña</span>
+        }
+        @if (form.controls.confirmarContrasena.touched && form.errors?.['noCoinciden']) {
+          <span class="error-message" role="alert">Las contraseñas no coinciden</span>
+        }
+      </div>
+
+      <button type="submit" [disabled]="loading()">
+        {{ loading() ? 'Guardando...' : 'Guardar nueva contraseña' }}
+      </button>
+    </form>
+
+    <div class="auth-links">
+      <a routerLink="/login">Volver al inicio de sesión</a>
+    </div>
+  }
+</main>

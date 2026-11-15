@@ -27,9 +27,14 @@ export class Login implements OnInit {
   });
 
   ngOnInit() {
-    if (this.route.snapshot.queryParamMap.get('registrado') === '1') {
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('registrado') === '1') {
       this.successMessage.set(
         'Cuenta creada. Ingresa con tu correo y tu RUT sin puntos ni guion como contraseña.'
+      );
+    } else if (params.get('contrasenaRestablecida') === '1') {
+      this.successMessage.set(
+        'Contraseña actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.'
       );
     }
   }
