@@ -29,3 +29,16 @@ export const roleGuard: CanActivateFn = (route) => {
     ? router.createUrlTree([ROLE_HOME[userRole]])
     : router.createUrlTree(['/login']);
 };
+
+export const guestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.verificarVigencia() && authService.isAuthenticated()) {
+    const userRole = authService.role();
+    if (userRole && ROLE_HOME[userRole]) {
+      return router.createUrlTree([ROLE_HOME[userRole]]);
+    }
+  }
+  return true;
+};

@@ -8,10 +8,10 @@ import {
 } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { authGuard, roleGuard } from './auth.guard';
+import { authGuard, roleGuard, guestGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 
-describe('authGuard y roleGuard', () => {
+describe('authGuard, roleGuard y guestGuard', () => {
   let router: Router;
   const mockState = {} as RouterStateSnapshot;
 
@@ -72,7 +72,12 @@ describe('authGuard y roleGuard', () => {
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
         'dumbo_user',
-        JSON.stringify({ id: 1, correo: 'admin@dumbo.cl', nombreCompleto: 'Admin', rol: 'Administrador' })
+        JSON.stringify({
+          id: 1,
+          correo: 'admin@dumbo.cl',
+          nombreCompleto: 'Admin',
+          rol: 'Administrador',
+        })
       );
 
       inicializarContexto();
@@ -107,6 +112,91 @@ describe('authGuard y roleGuard', () => {
         roleGuard(route, mockState)
       ) as UrlTree;
       expect(router.serializeUrl(resultado)).toBe('/login');
+    });
+  });
+
+  describe('guestGuard (T4)', () => {
+    it('debe permitir el acceso (true) cuando no hay sesión activa', () => {
+      inicializarContexto();
+
+      const resultado = TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, mockState)
+      );
+      expect(resultado).toBe(true);
+    });
+
+    it('debe permitir el acceso (true) si el token guardado ya venció', () => {
+      localStorage.setItem('dumbo_token', 'token-vencido');
+      localStorage.setItem('dumbo_exp', new Date(Date.now() - 10_000).toISOString());
+      localStorage.setItem(
+        'dumbo_user',
+        JSON.stringify({ id: 1, correo: 'cli@dumbo.cl', nombreCompleto: 'Cli', rol: 'Cliente' })
+      );
+
+      inicializarContexto();
+
+      const resultado = TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, mockState)
+      );
+      expect(resultado).toBe(true);
+    });
+
+    it('debe redirigir a /admin si hay sesión vigente de Administrador', () => {
+      localStorage.setItem('dumbo_token', 'token-valido');
+      localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
+      localStorage.setItem(
+        'dumbo_user',
+        JSON.stringify({
+          id: 1,
+          correo: 'admin@dumbo.cl',
+          nombreCompleto: 'Admin',
+          rol: 'Administrador',
+        })
+      );
+
+      inicializarContexto();
+
+      const resultado = TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, mockState)
+      ) as UrlTree;
+      expect(router.serializeUrl(resultado)).toBe('/admin');
+    });
+
+    it('debe redirigir a /trabajador si hay sesión vigente de Trabajador', () => {
+      localStorage.setItem('dumbo_token', 'token-valido');
+      localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
+      localStorage.setItem(
+        'dumbo_user',
+        JSON.stringify({
+          id: 2,
+          correo: 'trab@dumbo.cl',
+          nombreCompleto: 'Trab',
+          rol: 'Trabajador',
+        })
+      );
+
+      inicializarContexto();
+
+      const resultado = TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, mockState)
+      ) as UrlTree;
+      expect(router.serializeUrl(resultado)).toBe('/trabajador');
+    });
+
+    it('debe redirigir a /cliente si hay sesión vigente de Cliente', () => {
+      localStorage.setItem('dumbo_token', 'token-valido');
+      localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
+      localStorage.setItem(
+        'dumbo_user',
+        JSON.stringify({ id: 3, correo: 'cli@dumbo.cl', nombreCompleto: 'Cli', rol: 'Cliente' })
+      );
+
+      inicializarContexto();
+
+      const resultado = TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, mockState)
+      ) as UrlTree;
+      expect(router.serializeUrl(resultado)).toBe('/cliente');
     });
   });
 });

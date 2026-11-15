@@ -1,18 +1,24 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from './core/auth/auth.guard';
+import { authGuard, roleGuard, guestGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', loadComponent: () => import('./login/login').then((m) => m.Login) },
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login').then((m) => m.Login),
+    canActivate: [guestGuard],
+  },
   {
     path: 'register',
     loadComponent: () => import('./register/register').then((m) => m.Register),
+    canActivate: [guestGuard],
     data: { modo: 'autoregistro' },
   },
   {
     path: 'recuperar-contrasena',
     loadComponent: () =>
       import('./recuperar-contrasena/recuperar-contrasena').then((m) => m.RecuperarContrasena),
+    canActivate: [guestGuard],
   },
   {
     path: 'restablecer-contrasena',
