@@ -42,3 +42,30 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+**/bin/
+**/obj/
+
+# Secretos y entorno local 
+.env
+.env.*
+!.env.example
+
+# Claves y certificados 
+deploy_key
+deploy_key.pub
+*.pem
+*.pfx
+*.key
+
+# Visual Studio / .NET
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Angular 
+/.angular
+
+# Logs
+*.log

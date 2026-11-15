@@ -1,9 +1,9 @@
-using Dumbo.API.Data; // Asegúrate de que Seba haya creado ApplicationDbContext en la carpeta Data
+using Dumbo.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurar CORS (Mauricio - Infraestructura)
+// 1. Configurar CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -29,3 +29,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+// Forzar rebuild de GitHub Actions

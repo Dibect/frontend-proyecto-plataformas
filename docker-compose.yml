@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql_server_dumbo
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=TuPasswordFuerte123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  backend:
+    build:
+      context: ./Dumbo.API
+      dockerfile: Dockerfile
+    container_name: dumbo_api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      # Esta línea sobreescribe el appsettings.json para apuntar al contenedor 'db' en lugar de 'localhost'
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=DumboDB;User Id=sa;Password=TuPasswordFuerte123!;TrustServerCertificate=True;
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dumbo_frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  sql_data:
