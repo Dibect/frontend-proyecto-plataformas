@@ -10,6 +10,18 @@ export const routes: Routes = [
     data: { modo: 'autoregistro' },
   },
   {
+    path: 'recuperar-contrasena',
+    loadComponent: () =>
+      import('./recuperar-contrasena/recuperar-contrasena').then((m) => m.RecuperarContrasena),
+  },
+  {
+    path: 'restablecer-contrasena',
+    loadComponent: () =>
+      import('./restablecer-contrasena/restablecer-contrasena').then(
+        (m) => m.RestablecerContrasena
+      ),
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./admin/admin').then((m) => m.Admin),
     canActivate: [authGuard, roleGuard],
