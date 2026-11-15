@@ -36,6 +36,8 @@ export class Login implements OnInit {
       this.successMessage.set(
         'Contraseña actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.'
       );
+    } else if (params.get('sesion') === 'expirada') {
+      this.successMessage.set('Tu sesión expiró. Inicia sesión nuevamente.');
     }
   }
 

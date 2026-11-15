@@ -26,16 +26,57 @@ export interface RegistroRequest {
   correo: string;
 }
 
+export type MotivoLogout = 'manual' | 'expirada';
+
+const MARGEN_EXPIRACION_MS = 10_000;
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+export function extraerExpiracionDeJwt(token: string): string | null {
+  try {
+    const partes = token.split('.');
+    if (partes.length < 2) return null;
+    const base64Url = partes[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const exp = payload['exp'];
+    if (typeof exp === 'number') {
+      return new Date(exp * 1000).toISOString();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private logoutTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly token = signal<string | null>(localStorage.getItem('dumbo_token'));
   readonly user = signal<Usuario | null>(this.loadUserFromStorage());
+  readonly fechaExpiracion = signal<string | null>(this.loadExpirationFromStorage());
 
-  readonly isAuthenticated = computed(() => !!this.token());
-  readonly role = computed(() => this.user()?.rol ?? null);
+  readonly isAuthenticated = computed(() => {
+    const tok = this.token();
+    const exp = this.fechaExpiracion();
+    if (!tok) return false;
+    return !this.estaVencida(exp);
+  });
+
+  readonly role = computed(() => (this.isAuthenticated() ? (this.user()?.rol ?? null) : null));
+
+  constructor() {
+    if (this.token()) {
+      if (this.estaVencida(this.fechaExpiracion())) {
+        this.limpiarEstadoSesion();
+      } else {
+        this.programarAutoLogout();
+      }
+    }
+  }
 
   login(correo: string, contrasena: string) {
     return this.http.post<AuthResponse>(`${API_URL}/login`, { correo, contrasena }).pipe(
@@ -104,19 +145,94 @@ export class AuthService {
       );
   }
 
-  logout() {
-    this.token.set(null);
-    this.user.set(null);
-    localStorage.removeItem('dumbo_token');
-    localStorage.removeItem('dumbo_user');
-    this.router.navigate(['/login']);
+  verificarVigencia(): boolean {
+    if (!this.token()) return false;
+    if (this.estaVencida(this.fechaExpiracion())) {
+      this.limpiarEstadoSesion();
+      return false;
+    }
+    return true;
+  }
+
+  logout(motivo: MotivoLogout = 'manual') {
+    this.limpiarEstadoSesion();
+    if (motivo === 'expirada') {
+      this.router.navigate(['/login'], { queryParams: { sesion: 'expirada' } });
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 
   private setSession(res: AuthResponse) {
+    const expIso = res.fechaExpiracion || extraerExpiracionDeJwt(res.token);
     this.token.set(res.token);
     this.user.set(res.usuario);
+    this.fechaExpiracion.set(expIso);
+
     localStorage.setItem('dumbo_token', res.token);
     localStorage.setItem('dumbo_user', JSON.stringify(res.usuario));
+    if (expIso) {
+      localStorage.setItem('dumbo_exp', expIso);
+    } else {
+      localStorage.removeItem('dumbo_exp');
+    }
+
+    this.programarAutoLogout();
+  }
+
+  private limpiarEstadoSesion() {
+    this.limpiarTimerLogout();
+    this.token.set(null);
+    this.user.set(null);
+    this.fechaExpiracion.set(null);
+    localStorage.removeItem('dumbo_token');
+    localStorage.removeItem('dumbo_user');
+    localStorage.removeItem('dumbo_exp');
+  }
+
+  private programarAutoLogout() {
+    this.limpiarTimerLogout();
+    const exp = this.fechaExpiracion();
+    if (!exp) return;
+
+    const expMs = Date.parse(exp);
+    if (Number.isNaN(expMs)) return;
+
+    const delay = expMs - Date.now() - MARGEN_EXPIRACION_MS;
+    if (delay <= 0) {
+      this.logout('expirada');
+      return;
+    }
+
+    const timeoutDelay = Math.min(delay, MAX_TIMEOUT_MS);
+    this.logoutTimer = setTimeout(() => {
+      if (this.estaVencida(this.fechaExpiracion())) {
+        this.logout('expirada');
+      } else {
+        this.programarAutoLogout();
+      }
+    }, timeoutDelay);
+  }
+
+  private limpiarTimerLogout() {
+    if (this.logoutTimer !== null) {
+      clearTimeout(this.logoutTimer);
+      this.logoutTimer = null;
+    }
+  }
+
+  private estaVencida(expIso: string | null): boolean {
+    if (!expIso) return true;
+    const expMs = Date.parse(expIso);
+    if (Number.isNaN(expMs)) return true;
+    return expMs - MARGEN_EXPIRACION_MS <= Date.now();
+  }
+
+  private loadExpirationFromStorage(): string | null {
+    const guardada = localStorage.getItem('dumbo_exp');
+    if (guardada) return guardada;
+    const tok = localStorage.getItem('dumbo_token');
+    return tok ? extraerExpiracionDeJwt(tok) : null;
   }
 
   private loadUserFromStorage(): Usuario | null {

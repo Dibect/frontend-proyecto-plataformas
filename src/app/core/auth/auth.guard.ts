@@ -7,13 +7,20 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) return true;
+  if (authService.verificarVigencia() && authService.isAuthenticated()) {
+    return true;
+  }
   return router.createUrlTree(['/login']);
 };
 
 export const roleGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+
+  if (!authService.verificarVigencia() || !authService.isAuthenticated()) {
+    return router.createUrlTree(['/login']);
+  }
+
   const expectedRoles = route.data['roles'] as string[];
   const userRole = authService.role();
 
