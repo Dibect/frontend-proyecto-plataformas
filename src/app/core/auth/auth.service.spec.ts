@@ -24,6 +24,7 @@ describe('AuthService', () => {
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -33,7 +34,7 @@ describe('AuthService', () => {
     vi.useRealTimers();
   });
 
-  describe('Sesión, expiración y auto-logout (T3)', () => {
+  describe('Sesión, expiración y auto-logout', () => {
     it('debe guardar token, usuario y fechaExpiracion al hacer login y marcar isAuthenticated = true', () => {
       const futuroIso = new Date(Date.now() + 60_000).toISOString();
       const mockResponse: AuthResponse = {
@@ -72,6 +73,8 @@ describe('AuthService', () => {
       TestBed.configureTestingModule({
         providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
       });
+      const nuevoRouter = TestBed.inject(Router);
+      vi.spyOn(nuevoRouter, 'navigate').mockResolvedValue(true);
       const nuevoService = TestBed.inject(AuthService);
 
       expect(nuevoService.isAuthenticated()).toBe(true);
@@ -91,6 +94,8 @@ describe('AuthService', () => {
       TestBed.configureTestingModule({
         providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
       });
+      const nuevoRouter = TestBed.inject(Router);
+      vi.spyOn(nuevoRouter, 'navigate').mockResolvedValue(true);
       const nuevoService = TestBed.inject(AuthService);
 
       expect(nuevoService.isAuthenticated()).toBe(false);
@@ -100,7 +105,6 @@ describe('AuthService', () => {
     });
 
     it('debe limpiar storage y navegar a /login sin queryParams en logout manual', () => {
-      const navigateSpy = vi.spyOn(router, 'navigate');
       const futuroIso = new Date(Date.now() + 60_000).toISOString();
 
       service.login('cliente@dumbo.cl', '12345678K').subscribe();
@@ -114,12 +118,11 @@ describe('AuthService', () => {
 
       expect(service.isAuthenticated()).toBe(false);
       expect(localStorage.getItem('dumbo_token')).toBeNull();
-      expect(navigateSpy).toHaveBeenCalledWith(['/login']);
+      expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
 
     it('debe ejecutar auto-logout al vencer el tiempo y redirigir a /login?sesion=expirada', () => {
       vi.useFakeTimers();
-      const navigateSpy = vi.spyOn(router, 'navigate');
       const expEn30Segundos = new Date(Date.now() + 30_000).toISOString();
 
       service.login('cliente@dumbo.cl', '12345678K').subscribe();
@@ -131,14 +134,33 @@ describe('AuthService', () => {
 
       expect(service.isAuthenticated()).toBe(true);
 
-      // Con margen de 10 s, a los 20 s exactos debe dispararse el auto-logout
       vi.advanceTimersByTime(20_000);
 
       expect(service.isAuthenticated()).toBe(false);
       expect(service.token()).toBeNull();
-      expect(navigateSpy).toHaveBeenCalledWith(['/login'], {
+      expect(router.navigate).toHaveBeenCalledWith(['/login'], {
         queryParams: { sesion: 'expirada' },
       });
+    });
+  });
+
+  describe('Mapeo de errores en login', () => {
+    it('debe priorizar el mensaje exacto del ERS para 401 y 403 sobre err.error.message', () => {
+      let msg401 = '';
+      service.login('a@b.cl', 'mal').subscribe({ error: (e) => (msg401 = e) });
+      httpMock
+        .expectOne(`${API_URL}/login`)
+        .flush({ message: 'Otro texto' }, { status: 401, statusText: 'Unauthorized' });
+      expect(msg401).toBe(
+        'Las credenciales de acceso son incorrectas o el usuario no está registrado en el sistema'
+      );
+
+      let msg403 = '';
+      service.login('a@b.cl', 'mal').subscribe({ error: (e) => (msg403 = e) });
+      httpMock
+        .expectOne(`${API_URL}/login`)
+        .flush({ message: 'Otro texto' }, { status: 403, statusText: 'Forbidden' });
+      expect(msg403).toBe('Usuario deshabilitado');
     });
   });
 

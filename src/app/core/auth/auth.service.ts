@@ -81,13 +81,24 @@ export class AuthService {
   login(correo: string, contrasena: string) {
     return this.http.post<AuthResponse>(`${API_URL}/login`, { correo, contrasena }).pipe(
       tap((res) => this.setSession(res)),
-      catchError((err) =>
+      catchError((err: HttpErrorResponse) =>
         throwError(() => {
-          if (err.error?.message) return err.error.message;
-          if (err.status === 401)
+          if (err.status === 401) {
             return 'Las credenciales de acceso son incorrectas o el usuario no está registrado en el sistema';
-          if (err.status === 403) return 'Usuario deshabilitado';
-          return 'Error de conexión';
+          }
+          if (err.status === 403) {
+            return 'Usuario deshabilitado';
+          }
+          if (err.status === 0) {
+            return 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
+          }
+          if (err.status >= 500) {
+            return 'El servidor tuvo un problema. Inténtalo más tarde.';
+          }
+          if (err.error?.message) {
+            return err.error.message as string;
+          }
+          return 'No pudimos iniciar sesión. Inténtalo nuevamente.';
         })
       )
     );
