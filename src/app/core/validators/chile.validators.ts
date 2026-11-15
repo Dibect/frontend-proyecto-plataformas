@@ -1,5 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
+const FORMATO_RUT_REGEX = /^(?:\d{1,2}\.\d{3}\.\d{3}|\d{7,8})-?[\dkK]$/;
+
 export function normalizarRut(rut: string): string {
   if (!rut) return '';
   const limpio = rut.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -21,8 +23,15 @@ export function formatearRut(rut: string): string {
 
 export function rutValido(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const value = control.value;
+    const rawValue = control.value as string | null | undefined;
+    if (!rawValue) return null;
+
+    const value = rawValue.trim();
     if (!value) return null;
+
+    if (!FORMATO_RUT_REGEX.test(value)) {
+      return { rut: true };
+    }
 
     const limpio = value.replace(/[^0-9kK]/g, '').toUpperCase();
     if (limpio.length < 8 || limpio.length > 9) return { rut: true };
@@ -39,7 +48,8 @@ export function rutValido(): ValidatorFn {
     }
 
     const dvEsperado = 11 - (suma % 11);
-    const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+    const dvCalculado =
+      dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
 
     return dv === dvCalculado ? null : { rut: true };
   };

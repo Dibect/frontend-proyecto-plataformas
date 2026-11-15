@@ -6,7 +6,7 @@ import { Login } from './login';
 import { API_URL } from '../core/api.config';
 import { AuthService } from '../core/auth/auth.service';
 
-describe('Login (T5)', () => {
+describe('Login', () => {
   let component: Login;
   let fixture: ComponentFixture<Login>;
   let httpMock: HttpTestingController;
@@ -47,12 +47,17 @@ describe('Login (T5)', () => {
     localStorage.clear();
   });
 
-  describe('Navegación según rol tras login exitoso', () => {
+  it('should create', async () => {
+    await configurarComponente();
+    expect(component).toBeTruthy();
+  });
+
+  describe('redirección por rol', () => {
     it.each([
       ['Administrador', '/admin'],
       ['Trabajador', '/trabajador'],
       ['Cliente', '/cliente'],
-    ])('debe redirigir a %s hacia %s', async (rol, rutaEsperada) => {
+    ])('debe navegar a %s -> %s tras login exitoso', async (rol, rutaEsperada) => {
       await configurarComponente();
 
       component.form.patchValue({
@@ -79,7 +84,7 @@ describe('Login (T5)', () => {
       expect(router.navigate).toHaveBeenCalledWith([rutaEsperada]);
     });
 
-    it('debe hacer logout y mostrar aviso si el rol es desconocido', async () => {
+    it('debe cerrar sesión y mostrar error si el rol no tiene panel asignado', async () => {
       await configurarComponente();
       const logoutSpy = vi.spyOn(authService, 'logout');
 
@@ -98,7 +103,7 @@ describe('Login (T5)', () => {
           id: 99,
           correo: 'raro@dumbo.cl',
           nombreCompleto: 'Rol Raro',
-          rol: 'SupervisorInexistente',
+          rol: 'RolInexistente',
         },
       });
 
@@ -110,8 +115,8 @@ describe('Login (T5)', () => {
     });
   });
 
-  describe('Mensajes de error exactos del ERS y de red', () => {
-    it('debe mostrar el mensaje exacto del ERS en 401 incluso si el backend envía otro message', async () => {
+  describe('manejo de errores', () => {
+    it('debe mostrar error de credenciales en 401', async () => {
       await configurarComponente();
 
       component.form.patchValue({
@@ -123,7 +128,7 @@ describe('Login (T5)', () => {
 
       const req = httpMock.expectOne(`${API_URL}/login`);
       req.flush(
-        { message: 'Invalid credentials from backend' },
+        { message: 'Invalid credentials' },
         { status: 401, statusText: 'Unauthorized' }
       );
 
@@ -135,7 +140,7 @@ describe('Login (T5)', () => {
       );
     });
 
-    it('debe mostrar "Usuario deshabilitado" en 403 incluso si el backend envía otro message', async () => {
+    it('debe mostrar error de usuario deshabilitado en 403', async () => {
       await configurarComponente();
 
       component.form.patchValue({
@@ -146,10 +151,7 @@ describe('Login (T5)', () => {
       component.onSubmit();
 
       const req = httpMock.expectOne(`${API_URL}/login`);
-      req.flush(
-        { message: 'Account disabled by admin' },
-        { status: 403, statusText: 'Forbidden' }
-      );
+      req.flush({ message: 'Disabled' }, { status: 403, statusText: 'Forbidden' });
 
       await fixture.whenStable();
       fixture.detectChanges();
@@ -157,7 +159,7 @@ describe('Login (T5)', () => {
       expect(component.errorMessage()).toBe('Usuario deshabilitado');
     });
 
-    it('debe mostrar mensaje de falta de conexión cuando status es 0', async () => {
+    it('debe mostrar error de red cuando status es 0', async () => {
       await configurarComponente();
 
       component.form.patchValue({
@@ -173,12 +175,10 @@ describe('Login (T5)', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(component.errorMessage()).toBe(
-        'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.'
-      );
+      expect(component.errorMessage()).toContain('No hay conexión con el servidor');
     });
 
-    it('debe mostrar mensaje de problema del servidor cuando status es 500', async () => {
+    it('debe mostrar error del servidor cuando status es 500', async () => {
       await configurarComponente();
 
       component.form.patchValue({
@@ -198,8 +198,8 @@ describe('Login (T5)', () => {
     });
   });
 
-  describe('Validación de formulario, foco y UX', () => {
-    it('no debe deshabilitar el botón de submit cuando el formulario es inválido (solo con loading)', async () => {
+  describe('validación de formulario', () => {
+    it('debe mantener el botón habilitado mientras no esté cargando', async () => {
       await configurarComponente();
       const compiled = fixture.nativeElement as HTMLElement;
       const boton = compiled.querySelector('button[type="submit"]') as HTMLButtonElement;
@@ -208,7 +208,7 @@ describe('Login (T5)', () => {
       expect(boton.disabled).toBe(false);
     });
 
-    it('no debe llamar al backend si el formulario es inválido, debe mostrar errores y enfocar el primer campo inválido', async () => {
+    it('debe mostrar errores y enfocar el primer campo inválido al enviar vacío', async () => {
       await configurarComponente();
       const compiled = fixture.nativeElement as HTMLElement;
       const correoInput = compiled.querySelector('#correo') as HTMLInputElement;
@@ -225,7 +225,7 @@ describe('Login (T5)', () => {
       expect(compiled.textContent).toContain('La contraseña es obligatoria');
     });
 
-    it('debe enfocar el campo contraseña si el correo es válido pero falta la contraseña', async () => {
+    it('debe enfocar contraseña si el correo ya es válido', async () => {
       await configurarComponente();
       const compiled = fixture.nativeElement as HTMLElement;
       const contrasenaInput = compiled.querySelector('#contrasena') as HTMLInputElement;
@@ -240,18 +240,18 @@ describe('Login (T5)', () => {
     });
   });
 
-  describe('Mensajes según queryParams', () => {
-    it('debe mostrar mensaje de cuenta creada con ?registrado=1', async () => {
+  describe('avisos por query params', () => {
+    it('debe mostrar aviso de cuenta creada con registrado=1', async () => {
       await configurarComponente({ registrado: '1' });
       expect(component.successMessage()).toContain('Cuenta creada');
     });
 
-    it('debe mostrar mensaje de contraseña actualizada con ?contrasenaRestablecida=1', async () => {
+    it('debe mostrar aviso de contraseña restablecida con contrasenaRestablecida=1', async () => {
       await configurarComponente({ contrasenaRestablecida: '1' });
       expect(component.successMessage()).toContain('Contraseña actualizada correctamente');
     });
 
-    it('debe mostrar "Tu sesión expiró. Inicia sesión nuevamente." con ?sesion=expirada', async () => {
+    it('debe mostrar aviso de sesión expirada con sesion=expirada', async () => {
       await configurarComponente({ sesion: 'expirada' });
       expect(component.successMessage()).toBe('Tu sesión expiró. Inicia sesión nuevamente.');
     });

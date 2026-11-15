@@ -4,22 +4,26 @@ import {
   normalizarRut,
   formatearRut,
   telefonoChileno,
-  normalizarTelefono
+  normalizarTelefono,
 } from './chile.validators';
 
 describe('Chile Validators', () => {
   describe('rutValido', () => {
-    it('debe validar RUTs correctos con o sin formato', () => {
+    it('debe validar RUTs correctos con o sin puntos y guion', () => {
       const validator = rutValido();
       expect(validator(new FormControl('12.345.678-5'))).toBeNull();
       expect(validator(new FormControl('12345678-5'))).toBeNull();
       expect(validator(new FormControl('123456785'))).toBeNull();
       expect(validator(new FormControl('9.111.111-k'))).toBeNull();
+      expect(validator(new FormControl('9111111K'))).toBeNull();
     });
 
-    it('debe rechazar RUTs incorrectos', () => {
+    it('debe rechazar RUTs con dígito verificador incorrecto o formato inválido (ej. caracteres extra)', () => {
       const validator = rutValido();
       expect(validator(new FormControl('12.345.678-0'))).toEqual({ rut: true });
+      expect(validator(new FormControl('xx12345678-5yy'))).toEqual({ rut: true });
+      expect(validator(new FormControl('12.345678-5'))).toEqual({ rut: true });
+      expect(validator(new FormControl('12--345678-5'))).toEqual({ rut: true });
       expect(validator(new FormControl('123'))).toEqual({ rut: true });
       expect(validator(new FormControl('12345678901'))).toEqual({ rut: true });
       expect(validator(new FormControl('abcdefghi'))).toEqual({ rut: true });

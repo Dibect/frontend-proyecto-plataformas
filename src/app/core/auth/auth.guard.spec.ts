@@ -11,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { authGuard, roleGuard, guestGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 
-describe('authGuard, roleGuard y guestGuard', () => {
+describe('Auth Guards', () => {
   let router: Router;
   const mockState = {} as RouterStateSnapshot;
 
@@ -37,7 +37,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
   };
 
   describe('authGuard', () => {
-    it('debe permitir el acceso (true) cuando hay una sesión vigente', () => {
+    it('debe permitir el acceso con sesión vigente', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
@@ -53,7 +53,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(resultado).toBe(true);
     });
 
-    it('debe redirigir a /login cuando la sesión está vencida o no existe', () => {
+    it('debe redirigir a /login si la sesión venció o no existe', () => {
       localStorage.setItem('dumbo_token', 'token-vencido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() - 10_000).toISOString());
 
@@ -67,7 +67,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
   });
 
   describe('roleGuard', () => {
-    it('debe permitir el acceso cuando el usuario tiene el rol esperado', () => {
+    it('debe permitir el acceso cuando el rol coincide', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
@@ -87,7 +87,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(resultado).toBe(true);
     });
 
-    it('debe redirigir al ROLE_HOME del usuario si tiene otro rol válido', () => {
+    it('debe redirigir al inicio de su rol si no tiene permiso para la ruta', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
@@ -104,7 +104,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(router.serializeUrl(resultado)).toBe('/cliente');
     });
 
-    it('debe redirigir a /login si no hay sesión vigente', () => {
+    it('debe redirigir a /login si no hay sesión', () => {
       inicializarContexto();
 
       const route = crearRouteConRoles(['Cliente']);
@@ -115,8 +115,8 @@ describe('authGuard, roleGuard y guestGuard', () => {
     });
   });
 
-  describe('guestGuard (T4)', () => {
-    it('debe permitir el acceso (true) cuando no hay sesión activa', () => {
+  describe('guestGuard', () => {
+    it('debe permitir el acceso sin sesión activa', () => {
       inicializarContexto();
 
       const resultado = TestBed.runInInjectionContext(() =>
@@ -125,7 +125,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(resultado).toBe(true);
     });
 
-    it('debe permitir el acceso (true) si el token guardado ya venció', () => {
+    it('debe permitir el acceso si el token guardado ya venció', () => {
       localStorage.setItem('dumbo_token', 'token-vencido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() - 10_000).toISOString());
       localStorage.setItem(
@@ -141,7 +141,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(resultado).toBe(true);
     });
 
-    it('debe redirigir a /admin si hay sesión vigente de Administrador', () => {
+    it('debe redirigir a /admin si hay sesión de Administrador', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
@@ -162,7 +162,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(router.serializeUrl(resultado)).toBe('/admin');
     });
 
-    it('debe redirigir a /trabajador si hay sesión vigente de Trabajador', () => {
+    it('debe redirigir a /trabajador si hay sesión de Trabajador', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(
@@ -183,7 +183,7 @@ describe('authGuard, roleGuard y guestGuard', () => {
       expect(router.serializeUrl(resultado)).toBe('/trabajador');
     });
 
-    it('debe redirigir a /cliente si hay sesión vigente de Cliente', () => {
+    it('debe redirigir a /cliente si hay sesión de Cliente', () => {
       localStorage.setItem('dumbo_token', 'token-valido');
       localStorage.setItem('dumbo_exp', new Date(Date.now() + 60_000).toISOString());
       localStorage.setItem(

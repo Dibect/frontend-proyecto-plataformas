@@ -34,8 +34,8 @@ describe('AuthService', () => {
     vi.useRealTimers();
   });
 
-  describe('Sesión, expiración y auto-logout', () => {
-    it('debe guardar token, usuario y fechaExpiracion al hacer login y marcar isAuthenticated = true', () => {
+  describe('login y sesión', () => {
+    it('debe guardar la sesión y autenticar al usuario al iniciar sesión', () => {
       const futuroIso = new Date(Date.now() + 60_000).toISOString();
       const mockResponse: AuthResponse = {
         token: 'jwt-token-valido',
@@ -59,7 +59,7 @@ describe('AuthService', () => {
       expect(localStorage.getItem('dumbo_exp')).toBe(futuroIso);
     });
 
-    it('debe extraer exp desde el JWT si dumbo_exp no está en localStorage', () => {
+    it('debe leer exp del JWT si no existe fecha de expiración guardada', () => {
       const expSegundos = Math.floor((Date.now() + 120_000) / 1000);
       const jwt = crearJwtConExp(expSegundos);
 
@@ -81,7 +81,7 @@ describe('AuthService', () => {
       expect(nuevoService.role()).toBe('Trabajador');
     });
 
-    it('debe limpiar la sesión al iniciar el servicio si el token guardado ya venció', () => {
+    it('debe limpiar la sesión al iniciar si el token ya venció', () => {
       const pasadoIso = new Date(Date.now() - 5_000).toISOString();
       localStorage.setItem('dumbo_token', 'token-vencido');
       localStorage.setItem('dumbo_exp', pasadoIso);
@@ -104,7 +104,7 @@ describe('AuthService', () => {
       expect(localStorage.getItem('dumbo_exp')).toBeNull();
     });
 
-    it('debe limpiar storage y navegar a /login sin queryParams en logout manual', () => {
+    it('debe limpiar storage y redirigir a /login al cerrar sesión manualmente', () => {
       const futuroIso = new Date(Date.now() + 60_000).toISOString();
 
       service.login('cliente@dumbo.cl', '12345678K').subscribe();
@@ -121,7 +121,7 @@ describe('AuthService', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
 
-    it('debe ejecutar auto-logout al vencer el tiempo y redirigir a /login?sesion=expirada', () => {
+    it('debe cerrar sesión automáticamente cuando expira el token', () => {
       vi.useFakeTimers();
       const expEn30Segundos = new Date(Date.now() + 30_000).toISOString();
 
@@ -142,10 +142,8 @@ describe('AuthService', () => {
         queryParams: { sesion: 'expirada' },
       });
     });
-  });
 
-  describe('Mapeo de errores en login', () => {
-    it('debe priorizar el mensaje exacto del ERS para 401 y 403 sobre err.error.message', () => {
+    it('debe retornar los mensajes de error correspondientes para 401 y 403', () => {
       let msg401 = '';
       service.login('a@b.cl', 'mal').subscribe({ error: (e) => (msg401 = e) });
       httpMock
@@ -164,8 +162,8 @@ describe('AuthService', () => {
     });
   });
 
-  describe('solicitarRecuperacion y restablecerContrasena (T2)', () => {
-    it('debe enviar POST a /recuperar-contrasena con el correo limpio y completar con 204', () => {
+  describe('recuperación y restablecimiento de contraseña', () => {
+    it('debe enviar solicitud de recuperación con el correo sin espacios', () => {
       let completado = false;
       service.solicitarRecuperacion('  cliente@dumbo.cl  ').subscribe({
         next: () => {
@@ -181,7 +179,7 @@ describe('AuthService', () => {
       expect(completado).toBe(true);
     });
 
-    it('debe tratar un 404 como éxito para no revelar si el correo existe', () => {
+    it('debe completar sin error aunque el backend responda 404 en recuperación', () => {
       let completado = false;
       service.solicitarRecuperacion('noexiste@dumbo.cl').subscribe({
         next: () => {
@@ -194,7 +192,7 @@ describe('AuthService', () => {
       expect(completado).toBe(true);
     });
 
-    it('debe enviar POST a /restablecer-contrasena con token y nuevaContrasena', () => {
+    it('debe enviar el token y la nueva contraseña al restablecer', () => {
       let completado = false;
       service.restablecerContrasena('token-abc-123', 'Abcdefgh1').subscribe({
         next: () => {
