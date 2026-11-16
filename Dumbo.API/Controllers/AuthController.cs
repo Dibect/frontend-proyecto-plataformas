@@ -7,7 +7,7 @@ using Dumbo.API.Models.Enums;
 namespace Dumbo.API.Controllers;
 
 [ApiController]
-[Route("api")]
+[Route("api/autenticacion")]
 public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
