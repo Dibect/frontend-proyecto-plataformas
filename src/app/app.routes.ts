@@ -41,6 +41,20 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] },
   },
   {
+    path: 'admin/trabajadores/nuevo',
+    loadComponent: () =>
+      import('./admin/trabajadores/trabajador-form/trabajador-form').then((m) => m.TrabajadorForm),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'], modo: 'crear' },
+  },
+  {
+    path: 'admin/trabajadores/:id/editar',
+    loadComponent: () =>
+      import('./admin/trabajadores/trabajador-form/trabajador-form').then((m) => m.TrabajadorForm),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'], modo: 'editar' },
+  },
+  {
     path: 'trabajador',
     loadComponent: () => import('./trabajador/trabajador').then((m) => m.Trabajador),
     canActivate: [authGuard, roleGuard],

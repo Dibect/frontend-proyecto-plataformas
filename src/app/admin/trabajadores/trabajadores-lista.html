@@ -1,7 +1,10 @@
 <main class="lista-container">
   <header class="lista-header">
     <h2>Trabajadores</h2>
-    <a routerLink="/admin">Volver al panel</a>
+    <div>
+      <a routerLink="nuevo" class="btn-nuevo" style="margin-right: 15px;">Nuevo trabajador</a>
+      <a routerLink="/admin">Volver al panel</a>
+    </div>
   </header>
 
   @if (loading()) {
@@ -23,6 +26,13 @@
       </span>
     </div>
 
+    @if (errorAccion()) {
+      <div class="alert alert-error" role="alert">
+        <span>{{ errorAccion() }}</span>
+        <button type="button" (click)="errorAccion.set(null)">Cerrar</button>
+      </div>
+    }
+
     @if (trabajadoresFiltrados().length === 0) {
       <p class="estado">Ningún trabajador coincide con «{{ filtro() }}».</p>
     } @else {
@@ -36,6 +46,7 @@
               <th scope="col">Correo</th>
               <th scope="col">Teléfono</th>
               <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -49,6 +60,16 @@
                   <span class="badge" [class.badge-activo]="t.activo" [class.badge-deshabilitado]="!t.activo">
                     {{ t.activo ? 'Activo' : 'Deshabilitado' }}
                   </span>
+                </td>
+                <td>
+                  <a [routerLink]="[t.id, 'editar']" class="action-link">Editar</a>
+                  <button 
+                    type="button" 
+                    class="btn-estado" 
+                    [disabled]="cambiandoEstadoId() === t.id"
+                    (click)="cambiarEstado(t)">
+                    {{ t.activo ? 'Deshabilitar' : 'Habilitar' }}
+                  </button>
                 </td>
               </tr>
             }

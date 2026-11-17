@@ -54,7 +54,7 @@ describe('TrabajadoresLista', () => {
     fixture = TestBed.createComponent(TrabajadoresLista);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    fixture.detectChanges(); // dispara ngOnInit y la petición GET
+    fixture.detectChanges();// dispara ngOnInit y la petición GET
   });
 
   afterEach(() => {
@@ -125,5 +125,23 @@ describe('TrabajadoresLista', () => {
 
     expect(el().querySelector('[role="alert"]')).toBeNull();
     expect(filas().length).toBe(2);
+  });
+
+  it('debe cambiar el estado de un trabajador y actualizar la fila', async () => {
+    await cargarTrabajadores();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const botonEstado = filas()[0].querySelector('.btn-estado') as HTMLButtonElement;
+    botonEstado.click();
+
+    const req = httpMock.expectOne(`${API_TRABAJADORES_URL}/1/estado`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ activo: false });
+
+    req.flush(null);
+    await actualizar();
+
+    expect(filas()[0].textContent).toContain('Deshabilitado');
+    expect(filas()[0].textContent).toContain('Habilitar');
   });
 });
