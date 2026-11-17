@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
@@ -16,6 +16,7 @@ export class Login implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   loading = signal(false);
   errorMessage = signal<string | null>(null);
@@ -42,7 +43,11 @@ export class Login implements OnInit {
   }
 
   onSubmit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.enfocarPrimerInvalido();
+      return;
+    }
 
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -60,10 +65,21 @@ export class Login implements OnInit {
           this.errorMessage.set('Tu rol no tiene un panel asignado.');
         }
       },
-      error: (msg) => {
+      error: (msg: string) => {
         this.errorMessage.set(msg);
         this.loading.set(false);
       },
     });
+  }
+
+  private enfocarPrimerInvalido() {
+    const ordenCampos: (keyof typeof this.form.controls)[] = ['correo', 'contrasena'];
+    for (const nombre of ordenCampos) {
+      if (this.form.controls[nombre].invalid) {
+        const input = this.host.nativeElement.querySelector<HTMLInputElement>(`#${nombre}`);
+        input?.focus();
+        break;
+      }
+    }
   }
 }

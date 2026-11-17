@@ -11,67 +11,106 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-group">
       <label for="rut">RUT</label>
-      <input id="rut" type="text" formControlName="rut" (blur)="onRutBlur()"
-             [attr.aria-invalid]="form.controls.rut.invalid && form.controls.rut.touched">
+      <input
+        id="rut"
+        type="text"
+        formControlName="rut"
+        (blur)="onRutBlur()"
+        [attr.aria-invalid]="form.controls.rut.invalid && form.controls.rut.touched"
+      />
       @if (form.controls.rut.touched && form.controls.rut.errors?.['required']) {
-        <span class="error-message">El RUT es obligatorio</span>
+        <span class="error-message" role="alert">El RUT es obligatorio</span>
       }
       @if (form.controls.rut.touched && form.controls.rut.errors?.['rut']) {
-        <span class="error-message">RUT inválido, revisa el dígito verificador</span>
+        <span class="error-message" role="alert">RUT inválido, revisa el formato y el dígito verificador</span>
       }
     </div>
 
     <div class="form-group">
       <label for="nombres">Nombres</label>
-      <input id="nombres" type="text" formControlName="nombres" autocomplete="given-name"
-             [attr.aria-invalid]="form.controls.nombres.invalid && form.controls.nombres.touched">
+      <input
+        id="nombres"
+        type="text"
+        formControlName="nombres"
+        autocomplete="given-name"
+        [attr.aria-invalid]="form.controls.nombres.invalid && form.controls.nombres.touched"
+      />
       @if (form.controls.nombres.touched && form.controls.nombres.errors?.['required']) {
-        <span class="error-message">Los nombres son obligatorios</span>
+        <span class="error-message" role="alert">Los nombres son obligatorios</span>
       }
-      @if (form.controls.nombres.touched && (form.controls.nombres.errors?.['minlength'] || form.controls.nombres.errors?.['maxlength'])) {
-        <span class="error-message">Debe tener entre 2 y 60 caracteres</span>
+      @if (
+        form.controls.nombres.touched &&
+        (form.controls.nombres.errors?.['minlength'] || form.controls.nombres.errors?.['maxlength'])
+      ) {
+        <span class="error-message" role="alert">Debe tener entre 2 y 60 caracteres</span>
       }
     </div>
 
     <div class="form-group">
       <label for="apellidos">Apellidos</label>
-      <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name"
-             [attr.aria-invalid]="form.controls.apellidos.invalid && form.controls.apellidos.touched">
+      <input
+        id="apellidos"
+        type="text"
+        formControlName="apellidos"
+        autocomplete="family-name"
+        [attr.aria-invalid]="form.controls.apellidos.invalid && form.controls.apellidos.touched"
+      />
       @if (form.controls.apellidos.touched && form.controls.apellidos.errors?.['required']) {
-        <span class="error-message">Los apellidos son obligatorios</span>
+        <span class="error-message" role="alert">Los apellidos son obligatorios</span>
       }
-      @if (form.controls.apellidos.touched && (form.controls.apellidos.errors?.['minlength'] || form.controls.apellidos.errors?.['maxlength'])) {
-        <span class="error-message">Debe tener entre 2 y 60 caracteres</span>
+      @if (
+        form.controls.apellidos.touched &&
+        (form.controls.apellidos.errors?.['minlength'] ||
+          form.controls.apellidos.errors?.['maxlength'])
+      ) {
+        <span class="error-message" role="alert">Debe tener entre 2 y 60 caracteres</span>
       }
     </div>
 
     <div class="form-group">
       <label for="telefono">Teléfono</label>
-      <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="+56 9 1234 5678"
-             [attr.aria-invalid]="form.controls.telefono.invalid && form.controls.telefono.touched">
+      <input
+        id="telefono"
+        type="tel"
+        formControlName="telefono"
+        autocomplete="tel"
+        placeholder="+56 9 1234 5678"
+        [attr.aria-invalid]="form.controls.telefono.invalid && form.controls.telefono.touched"
+      />
       @if (form.controls.telefono.touched && form.controls.telefono.errors?.['required']) {
-        <span class="error-message">El teléfono es obligatorio</span>
+        <span class="error-message" role="alert">El teléfono es obligatorio</span>
       }
       @if (form.controls.telefono.touched && form.controls.telefono.errors?.['telefono']) {
-        <span class="error-message">Ingresa un celular chileno válido, ej. +56 9 1234 5678</span>
+        <span class="error-message" role="alert">Ingresa un celular chileno válido, ej. +56 9 1234 5678</span>
       }
     </div>
 
     <div class="form-group">
       <label for="correo">Correo electrónico</label>
-      <input id="correo" type="email" formControlName="correo" autocomplete="email"
-             [attr.aria-invalid]="form.controls.correo.invalid && form.controls.correo.touched">
+      <input
+        id="correo"
+        type="email"
+        formControlName="correo"
+        autocomplete="email"
+        [attr.aria-invalid]="form.controls.correo.invalid && form.controls.correo.touched"
+      />
       @if (form.controls.correo.touched && form.controls.correo.errors?.['required']) {
-        <span class="error-message">El correo es obligatorio</span>
+        <span class="error-message" role="alert">El correo es obligatorio</span>
       }
       @if (form.controls.correo.touched && form.controls.correo.errors?.['email']) {
-        <span class="error-message">Correo inválido</span>
+        <span class="error-message" role="alert">Correo inválido</span>
       }
     </div>
 
-    <p class="help-text">Tu contraseña inicial será tu RUT sin puntos ni guion.</p>
+    <p class="help-text">
+      {{
+        modo() === 'trabajador'
+          ? 'La contraseña inicial del cliente será su RUT sin puntos ni guion (con la K en mayúscula).'
+          : 'Tu contraseña inicial será tu RUT sin puntos ni guion (con la K en mayúscula).'
+      }}
+    </p>
 
-    <button type="submit" [disabled]="form.invalid || loading()">
+    <button type="submit" [disabled]="loading()">
       {{ loading() ? 'Cargando...' : 'Registrar' }}
     </button>
   </form>
