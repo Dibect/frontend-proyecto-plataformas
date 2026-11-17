@@ -55,7 +55,7 @@ describe('TrabajadorForm', () => {
         nombres: ' Juan ',
         apellidos: ' Pérez ',
         telefono: '912345678',
-        correo: ' juan@test.com ',
+        correo: 'juan@test.com',
       });
 
       component.onSubmit();
