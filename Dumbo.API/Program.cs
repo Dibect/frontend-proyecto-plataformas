@@ -1,4 +1,5 @@
 using Dumbo.API.Data;
+using Dumbo.API.Services.Productos;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,21 +21,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Agregar soporte para Controladores
 builder.Services.AddControllers();
+builder.Services.AddScoped<ImportadorCsvProductos>();
 
-// --- LÍNEAS NUEVAS: Agregar los servicios de Swagger ---
+// Agregar los servicios de Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// --- LÍNEAS NUEVAS: Activar la interfaz gráfica de Swagger ---
+// Activar la interfaz gráfica de Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Habilitar el middleware
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
