@@ -18,10 +18,10 @@ public static class DatabaseSeeder
         {
             try
             {
-                // 1. Aplicar migraciones
-                context.Database.Migrate();
+                // Aplicar migraciones
+                context.Database.EnsureCreated();
 
-                // 2. Insertar datos de prueba (solo en Development)
+                // Insertar datos de prueba (solo en Development)
                 if (env.IsDevelopment())
                 {
                     SeedAdministrador(context);
