@@ -21,13 +21,17 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        var usuario = await _usuarioRepository.ObtenerPorCorreoAsync(request.Correo);
+        if (string.IsNullOrWhiteSpace(request.Correo) || string.IsNullOrWhiteSpace(request.Contrasena))
+            return Unauthorized(new { message = "Credenciales inválidas." });
 
-        if (usuario == null)
-            return Unauthorized(new { message = "Invalid credentials" });
+        var correoNormalizado = request.Correo.Trim().ToLower();
+        var usuario = await _usuarioRepository.ObtenerPorCorreoAsync(correoNormalizado);
+
+        if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Contrasena, usuario.HashContrasena))
+            return Unauthorized(new { message = "Credenciales inválidas." });
 
         if (!usuario.Habilitado)
-            return StatusCode(403, new { message = "Disabled" });
+            return StatusCode(403, new { message = "Usuario deshabilitado." });
 
         var token = "jwt-valido-generado"; // Provisorio
         var fechaExpiracion = DateTime.UtcNow.AddHours(8);
@@ -70,19 +74,19 @@ public class AuthController : ControllerBase
         if (!EsRutValido(cuerpoRut, dvRut))
             return BadRequest(new { message = "El RUT es inválido o el dígito verificador es incorrecto." });
 
-        // 2. Normalización
+        // Normalización
         var rutNormalizado = $"{cuerpoRut}-{dvRut}";
         var correoNormalizado = request.Correo.Trim().ToLower();
-        var contrasenaInicial = rutLimpio; 
+        var contrasenaInicial = rutLimpio;
 
-        // 3. Verificación previa de duplicados
+        // Verificación previa de duplicados
         var existe = await _usuarioRepository.ExisteRutOCorreoAsync(rutNormalizado, correoNormalizado);
         if (existe)
         {
             return Conflict(new { message = "El RUT o el correo ya está registrado." });
         }
 
-        // 4. Creación y guardado
+        // Creación y guardado
         var nuevoUsuario = new Usuario
         {
             Rut = rutNormalizado,
@@ -96,7 +100,7 @@ public class AuthController : ControllerBase
             FechaCreacion = DateTime.UtcNow
         };
 
-        // Si hay concurrencia exacta y falla el índice único en SQL, 
+        // Si hay concurrencia exacta y falla el índice único en SQL,
         // el ExceptionMiddleware atrapará el error silenciosamente y retornará 409.
         await _usuarioRepository.AgregarAsync(nuevoUsuario);
 

@@ -17,16 +17,15 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      # Docker exige nombres en minúsculas. Así el mismo workflow sirve para
-      # cualquier repo copiado de este (usa el nombre del repo automáticamente).
-      - name: Calcular nombre de la imagen
+      - name: Calcular nombres de las imágenes
         id: img
         env:
           DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           REPO: ${{ github.event.repository.name }}
-        run: echo "name=${DH_USER:-local}/${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
+        run: |
+          echo "frontend=${DH_USER:-local}/${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
+          echo "backend=${DH_USER:-local}/${REPO}-api" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_OUTPUT"
 
-      # En un PR no se hace push, así que no hace falta (ni hay secrets en forks).
       - name: Login en Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -34,47 +33,67 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU (permite construir para ARM en el runner AMD64)
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Extraer metadata (tags/labels)
-        id: meta
+      - name: Metadata Frontend
+        id: meta_front
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.img.outputs.name }}
+          images: ${{ steps.img.outputs.frontend }}
           tags: |
             type=raw,value=latest
             type=sha,format=short
 
-      - name: Build (y push solo si es push a main, no en PRs)
+      - name: Build & Push Frontend
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_front.outputs.tags }}
+          labels: ${{ steps.meta_front.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Despliegue automático en la VM Linux (criterio CI/CD de la rúbrica, 4 puntos).
-  # Se activa creando la variable de repositorio DEPLOY_ENABLED = true
-  # (Settings → Secrets and variables → Actions → Variables).
+      - name: Metadata Backend
+        id: meta_back
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.img.outputs.backend }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build & Push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Dumbo.API
+          file: ./Dumbo.API/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta_back.outputs.tags }}
+          labels: ${{ steps.meta_back.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     needs: build-and-push
     if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Calcular nombre de la imagen y del contenedor
+      - name: Calcular nombres de imágenes y contenedores
         env:
           DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           REPO: ${{ github.event.repository.name }}
         run: |
-          echo "IMAGE=${DH_USER}/${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
-          echo "CONTAINER=${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
+          echo "FRONT_IMAGE=${DH_USER}/${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
+          echo "BACK_IMAGE=${DH_USER}/${REPO}-api" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
+          echo "FRONT_CONTAINER=${REPO}" | tr '[:upper:]' '[:lower:]' >> "$GITHUB_ENV"
 
       - name: Desplegar en la VM por SSH
         uses: appleboy/ssh-action@v1
@@ -84,8 +103,39 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_PORT || 22 }}
           script: |
-            docker pull ${{ env.IMAGE }}:latest
-            docker rm -f ${{ env.CONTAINER }} 2>/dev/null || true
-            docker run -d --name ${{ env.CONTAINER }} --restart unless-stopped \
-              -p ${{ vars.APP_PORT || 80 }}:80 ${{ env.IMAGE }}:latest
+            # 1. Crear red compartida si no existe
+            docker network create dumbo-net 2>/dev/null || true
+
+            # 2. Levantar SQL Server solo si no existe (mantiene los datos intactos)
+            if [ ! "$(docker ps -aq -f name=^sql_server_dumbo$)" ]; then
+              docker run -d --name sql_server_dumbo \
+                --network dumbo-net --network-alias db \
+                --restart unless-stopped \
+                -e ACCEPT_EULA=Y \
+                -e MSSQL_SA_PASSWORD="TuPasswordFuerte123!" \
+                -v sql_data:/var/opt/mssql \
+                mcr.microsoft.com/mssql/server:2022-latest
+            else
+              docker start sql_server_dumbo 2>/dev/null || true
+            fi
+
+            # 3. Actualizar y levantar Backend (.NET)
+            docker pull ${{ env.BACK_IMAGE }}:latest
+            docker rm -f dumbo_api 2>/dev/null || true
+            docker run -d --name dumbo_api \
+              --network dumbo-net --network-alias backend \
+              --restart unless-stopped \
+              -e ASPNETCORE_ENVIRONMENT=Production \
+              -e ConnectionStrings__DefaultConnection="Server=db,1433;Database=DumboDB;User Id=sa;Password=TuPasswordFuerte123!;TrustServerCertificate=True;" \
+              ${{ env.BACK_IMAGE }}:latest
+
+            # 4. Actualizar y levantar Frontend (Angular + Nginx)
+            docker pull ${{ env.FRONT_IMAGE }}:latest
+            docker rm -f ${{ env.FRONT_CONTAINER }} 2>/dev/null || true
+            docker run -d --name ${{ env.FRONT_CONTAINER }} \
+              --network dumbo-net \
+              --restart unless-stopped \
+              -p ${{ vars.APP_PORT || 80 }}:80 \
+              ${{ env.FRONT_IMAGE }}:latest
+
             docker image prune -f

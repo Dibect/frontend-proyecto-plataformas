@@ -11,22 +11,18 @@ public static class DatabaseSeeder
     {
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var env = app.Environment;
 
         var maxRetries = 10;
         for (int i = 0; i < maxRetries; i++)
         {
             try
             {
-                // Aplicar migraciones
+                // Crear la base de datos y tablas si no existen
                 context.Database.EnsureCreated();
 
-                // Insertar datos de prueba (solo en Development)
-                if (env.IsDevelopment())
-                {
-                    SeedAdministrador(context);
-                }
-                
+                // Garantizar que exista el usuario administrador inicial
+                SeedAdministrador(context);
+
                 break;
             }
             catch (Exception)
@@ -52,7 +48,7 @@ public static class DatabaseSeeder
                 Rol = RolUsuario.Administrador,
                 Habilitado = true
             });
-            
+
             context.SaveChanges();
         }
     }
