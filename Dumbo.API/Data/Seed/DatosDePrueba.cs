@@ -52,12 +52,12 @@ public static class DatosDePrueba
         // Cliente de prueba (hash de relleno; NO es una contraseña válida)
         var cliente = new Usuario
         {
-            Rut = "11111111-1",
+            Rut = "22222222-2",
             Nombres = "Cliente",
             Apellidos = "De Prueba",
             Telefono = "+56900000000",
             Correo = "cliente.prueba@dumbo.cl",
-            HashContrasena = "SIN_CONTRASENA_SEMILLA",
+            HashContrasena = BCrypt.Net.BCrypt.HashPassword("222222222"),
             Rol = RolUsuario.Cliente
         };
         db.Usuarios.Add(cliente);

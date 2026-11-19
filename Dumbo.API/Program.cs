@@ -1,4 +1,5 @@
 using Dumbo.API.Data;
+using Dumbo.API.Data.Seed;
 using Dumbo.API.Repositories;
 using Dumbo.API.Middleware;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
 // Aplicar migraciones al arrancar (con reintentos mientras SQL Server termina de iniciar)
 using (var scope = app.Services.CreateScope())
 {
@@ -34,6 +36,11 @@ using (var scope = app.Services.CreateScope())
         try { db.Database.Migrate(); break; }
         catch (Exception) when (intento < 10) { Thread.Sleep(3000); }
     }
+
+    // Datos de prueba de productos y pedidos solo en desarrollo
+    if (app.Environment.IsDevelopment())
+        await DatosDePrueba.SembrarAsync(db);
+}
 
 app.UseMiddleware<ExceptionMiddleware>();
 
