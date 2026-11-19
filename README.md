@@ -53,5 +53,38 @@ docker run --rm -p 8080:80 frontend   # http://localhost:8080
 npm ci
 npm start      # http://localhost:4200
 ```
+## Base de datos y reportes
+
+### Modelo de datos
+Entity Framework Core 8 con SQL Server 2022. Entidades en `Dumbo.API/Models/`: `Usuario`, `Categoria`, `Producto`, `ItemCarrito`, `Pedido`, `ItemPedido`. El diagrama ER está en `docs/diagramas/modelo-er.md`.
+
+- Los usuarios no se eliminan: se deshabilitan con `Habilitado = false` (RF-007).
+- Los pedidos y sus ítems no se borran en cascada, para conservar el historial de ventas. `ItemPedido.PrecioUnitario` guarda el precio al momento de la compra.
+- `Producto.NombreNormalizado` guarda una clave canónica del nombre para agrupar en reportes (ver abajo).
+
+### Migraciones
+Las migraciones están en `Dumbo.API/Migrations/` y se aplican automáticamente al iniciar la API (con reintentos mientras SQL Server termina de arrancar). Para crear una nueva, desde `Dumbo.API/`:
+
+```
+dotnet ef migrations add <Nombre>
+dotnet ef database update
+```
+
+En `Development` se cargan además datos de prueba (`Data/Seed/DatosDePrueba.cs`): 16 productos, categorías y pedidos pagados de varias semanas.
+
+### Normalización de nombres (RF-008)
+`NormalizadorNombreProducto.Normalizar()` pasa a minúsculas, quita tildes, cambia coma decimal por punto y unifica unidades. Así, "Bebida 1.5L", "bebida 1,5 lts" y "BEBIDA 1.5 Litros" se cuentan como un mismo producto (`bebida 1.5 l`).
+
+### Endpoints de reportes (RF-008)
+Solo consideran pedidos en estado `Pagado`. Son consultas de solo lectura con agregación en SQL, para no afectar el sistema transaccional.
+
+| Endpoint | Parámetros | Respuesta |
+|---|---|---|
+| `GET /api/reportes/tendencia-ventas` | `desde`, `hasta`, `granularidad` (`dia`, `semana`, `mes`) | Pedidos, unidades y total vendido por periodo |
+| `GET /api/reportes/top-productos` | `desde`, `hasta`, `top` (por defecto 10) | Productos más vendidos, agrupados por nombre normalizado |
+| `GET /api/reportes/stock-por-categoria` | ninguno | Productos y stock por categoría ("Sin categoría" incluida) |
+| `GET /api/reportes/resumen-inventario` | ninguno | Productos, unidades, stock bajo (1 a 10) y sin stock |
+
+Sin `desde`/`hasta` se usan los últimos 90 días. Parámetros inválidos devuelven `400`. Hoy los reportes no exigen autenticación; falta restringirlos a Trabajador/Administrador cuando el JWT esté integrado.
 
 Proyecto generado con Angular CLI 21.

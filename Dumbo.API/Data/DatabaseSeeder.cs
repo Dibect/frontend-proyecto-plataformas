@@ -17,8 +17,8 @@ public static class DatabaseSeeder
         {
             try
             {
-                // Crear la base de datos y tablas si no existen
-                context.Database.EnsureCreated();
+                // Aplicar migraciones (crea la base y las tablas si no existen)
+                context.Database.Migrate();
 
                 // Garantizar que exista el usuario administrador inicial
                 SeedAdministrador(context);
