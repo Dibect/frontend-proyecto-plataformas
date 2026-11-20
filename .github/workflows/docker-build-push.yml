@@ -111,6 +111,7 @@ jobs:
               docker run -d --name sql_server_dumbo \
                 --network dumbo-net --network-alias db \
                 --restart unless-stopped \
+                -p 1433:1433 \
                 -e ACCEPT_EULA=Y \
                 -e MSSQL_SA_PASSWORD="TuPasswordFuerte123!" \
                 -v sql_data:/var/opt/mssql \
@@ -125,7 +126,8 @@ jobs:
             docker run -d --name dumbo_api \
               --network dumbo-net --network-alias backend \
               --restart unless-stopped \
-              -e ASPNETCORE_ENVIRONMENT=Production \
+              -p 5000:8080 \
+              -e ASPNETCORE_ENVIRONMENT=Development \
               -e ConnectionStrings__DefaultConnection="Server=db,1433;Database=DumboDB;User Id=sa;Password=TuPasswordFuerte123!;TrustServerCertificate=True;" \
               ${{ env.BACK_IMAGE }}:latest
 
