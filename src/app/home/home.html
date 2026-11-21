@@ -1,0 +1,82 @@
+<!-- Barra superior de anuncios -->
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <span>Despacho gratis en compras sobre $35.000</span>
+    <span>Compra segura &middot; Stock actualizado</span>
+  </div>
+</div>
+
+<!-- Barra de navegación principal -->
+<header class="navbar">
+  <div class="navbar-inner">
+    <a routerLink="/" class="brand" aria-label="Dumbo Supermercados">
+      <span class="brand-badge">d</span>
+      <span class="brand-name">dumbo</span>
+    </a>
+
+    <form class="search-form" (submit)="onBuscar($event)" role="search">
+      <div class="search-input-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+        </svg>
+        <input
+          type="search"
+          placeholder="¿Qué necesitas hoy?"
+          [value]="busqueda()"
+          (input)="onInputBusqueda($event)"
+          aria-label="Buscar productos"
+        />
+      </div>
+      <button type="submit" class="btn-buscar">Buscar</button>
+    </form>
+
+    <nav class="nav-actions" aria-label="Acciones de usuario">
+      <a [routerLink]="rutaCuenta()" class="nav-link">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke-linecap="round" />
+        </svg>
+        <span>{{ auth.isAuthenticated() ? auth.user()?.nombreCompleto : 'Mi cuenta' }}</span>
+      </a>
+
+      <a routerLink="/cliente" class="nav-link nav-cart">
+        <span class="cart-icon-wrap">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="9.5" cy="19.5" r="1.2" />
+            <circle cx="17.5" cy="19.5" r="1.2" />
+          </svg>
+          @if (cantidadCarrito() > 0) {
+            <span class="cart-badge">{{ cantidadCarrito() }}</span>
+          }
+        </span>
+        <span>Carrito</span>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<!-- Sección Hero -->
+<main class="hero">
+  <section class="hero-content">
+    <div class="hero-copy">
+      <p class="hero-eyebrow">DEL CAMPO A TU MESA</p>
+      <h1 class="hero-title">Tu súper, más cerca.</h1>
+      <p class="hero-subtitle">
+        Productos frescos, precios honestos y todo lo que necesitas sin salir de casa.
+      </p>
+      <button type="button" class="btn-cta" (click)="irAComprar()">
+        <span>Comprar ahora</span>
+        <span aria-hidden="true">&rarr;</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="hero-media" aria-label="Pasillo de frutas y verduras frescas">
+    <img
+      src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1400&q=85"
+      alt="Estantería con verduras y frutas frescas de Dumbo Supermercados"
+    />
+  </section>
+</main>
