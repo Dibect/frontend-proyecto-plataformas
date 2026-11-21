@@ -1,72 +1,75 @@
-<main style="max-width: 400px; margin: 50px auto; font-family: sans-serif;">
-  <h2>Inicio de sesión (DUMBO) Prueba Presentación </h2>
+<div class="auth-page">
+  <header class="auth-header">
+    <a routerLink="/" class="brand" aria-label="Volver al inicio">
+      <span class="brand-badge">d</span>
+      <span class="brand-name">dumbo</span>
+    </a>
+    <a routerLink="/" class="back-link">&larr; Volver a la tienda</a>
+  </header>
 
-  @if (successMessage()) {
-    <div role="status" style="color: white; background: #2ecc71; padding: 10px; margin-bottom: 1rem; border-radius: 4px;">
-      {{ successMessage() }}
-    </div>
-  }
+  <main class="auth-main">
+    <section class="auth-card">
+      <div class="auth-heading">
+        <p class="auth-eyebrow">MI CUENTA</p>
+        <h1>Iniciar sesión</h1>
+        <p class="auth-subtitle">
+          Ingresa tus datos para acceder a tu cuenta de Dumbo Supermercados.
+        </p>
+      </div>
 
-  @if (errorMessage()) {
-    <div role="alert" style="color: white; background: #e74c3c; padding: 10px; margin-bottom: 1rem; border-radius: 4px;">
-      {{ errorMessage() }}
-    </div>
-  }
-
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <div style="margin-bottom: 1rem;">
-      <label for="correo" style="display: block;">Correo</label>
-      <input
-        id="correo"
-        type="email"
-        formControlName="correo"
-        autocomplete="username"
-        [attr.aria-invalid]="form.controls.correo.invalid && form.controls.correo.touched"
-        style="width: 100%; padding: 8px; box-sizing: border-box;"
-      />
-      @if (form.controls.correo.touched && form.controls.correo.errors?.['required']) {
-        <span role="alert" style="display: block; color: #e74c3c; font-size: 0.85rem; margin-top: 0.25rem;">
-          El correo es obligatorio
-        </span>
+      @if (successMessage()) {
+        <div class="alert-success" role="status">
+          {{ successMessage() }}
+        </div>
       }
-      @if (form.controls.correo.touched && form.controls.correo.errors?.['email']) {
-        <span role="alert" style="display: block; color: #e74c3c; font-size: 0.85rem; margin-top: 0.25rem;">
-          Correo inválido
-        </span>
-      }
-    </div>
 
-    <div style="margin-bottom: 1rem;">
-      <label for="contrasena" style="display: block;">Contraseña</label>
-      <input
-        id="contrasena"
-        type="password"
-        formControlName="contrasena"
-        autocomplete="current-password"
-        [attr.aria-invalid]="form.controls.contrasena.invalid && form.controls.contrasena.touched"
-        style="width: 100%; padding: 8px; box-sizing: border-box;"
-      />
-      @if (form.controls.contrasena.touched && form.controls.contrasena.errors?.['required']) {
-        <span role="alert" style="display: block; color: #e74c3c; font-size: 0.85rem; margin-top: 0.25rem;">
-          La contraseña es obligatoria
-        </span>
-      }
-    </div>
+      <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <label for="correo">Correo electrónico</label>
+          <input
+            id="correo"
+            type="email"
+            formControlName="correo"
+            placeholder="ejemplo@dumbo.cl"
+            autocomplete="email"
+          />
+          @if (form.controls.correo.touched && form.controls.correo.invalid) {
+            <span class="field-error">Ingresa un correo electrónico válido.</span>
+          }
+        </div>
 
-    <button
-      type="submit"
-      [disabled]="loading()"
-      style="width: 100%; padding: 10px; background: #3498db; color: white; border: none; cursor: pointer; margin-bottom: 1rem;"
-    >
-      {{ loading() ? 'Cargando...' : 'Entrar' }}
-    </button>
-  </form>
+        <div class="field">
+          <div class="field-label-row">
+            <label for="contrasena">Contraseña</label>
+            <a routerLink="/recuperar-contrasena" class="forgot-link">¿Olvidaste tu contraseña?</a>
+          </div>
+          <input
+            id="contrasena"
+            type="password"
+            formControlName="contrasena"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          @if (form.controls.contrasena.touched && form.controls.contrasena.invalid) {
+            <span class="field-error">Ingresa tu contraseña.</span>
+          }
+        </div>
 
-  <div style="text-align: center; margin-bottom: 0.75rem;">
-    <a routerLink="/recuperar-contrasena">¿Olvidaste tu contraseña?</a>
-  </div>
+        @if (errorMessage()) {
+          <div class="alert-error" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
 
-  <div style="text-align: center;">
-    <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
-  </div>
-</main>
+        <button type="submit" class="btn-submit" [disabled]="loading()">
+          {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
+        </button>
+      </form>
+
+      <footer class="auth-footer">
+        <span>¿Aún no tienes cuenta?</span>
+        <a routerLink="/register" class="register-link">Crear cuenta</a>
+      </footer>
+    </section>
+  </main>
+</div>
