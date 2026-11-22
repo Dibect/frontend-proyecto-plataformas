@@ -37,7 +37,7 @@
           <circle cx="12" cy="8" r="4" />
           <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" stroke-linecap="round" />
         </svg>
-        <span>{{ auth.isAuthenticated() ? auth.user()?.nombreCompleto : 'Mi cuenta' }}</span>
+        <span>{{ etiquetaCuenta() }}</span>
       </a>
 
       <a routerLink="/cliente" class="nav-link nav-cart">

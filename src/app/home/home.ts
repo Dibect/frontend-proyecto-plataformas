@@ -23,6 +23,14 @@ export class Home {
     return rol && ROLE_HOME[rol] ? ROLE_HOME[rol] : '/login';
   });
 
+  // Muestra "Hola, PrimerNombre" si hay sesión; si no, "Mi cuenta"
+  readonly etiquetaCuenta = computed(() => {
+    if (!this.auth.isAuthenticated()) return 'Mi cuenta';
+    const nombre = this.auth.user()?.nombreCompleto?.trim();
+    if (!nombre) return 'Mi cuenta';
+    return `Hola, ${nombre.split(' ')[0]}`;
+  });
+
   onInputBusqueda(event: Event) {
     this.busqueda.set((event.target as HTMLInputElement).value);
   }
