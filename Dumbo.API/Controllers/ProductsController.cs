@@ -13,6 +13,7 @@ namespace Dumbo.API.Controllers;
 [Authorize(Roles = "Trabajador")]
 public sealed class ProductsController : ControllerBase
 {
+    private const int UmbralStockBajo = 10;
     private readonly ApplicationDbContext _context;
     private readonly ImportadorCsvProductos _importador;
 
@@ -20,6 +21,93 @@ public sealed class ProductsController : ControllerBase
     {
         _context = context;
         _importador = importador;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(ListadoInventarioProductosDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ListadoInventarioProductosDto>> Listar(
+        CancellationToken cancellationToken,
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanoPagina = 5,
+        [FromQuery] string? busqueda = null,
+        [FromQuery] int? categoriaId = null,
+        [FromQuery] string estado = "todos")
+    {
+        pagina = Math.Max(1, pagina);
+        tamanoPagina = Math.Clamp(tamanoPagina, 1, 50);
+
+        var productosBase = _context.Productos.AsNoTracking();
+        var resumen = new ResumenInventarioDto(
+            await productosBase.CountAsync(cancellationToken),
+            await productosBase.SumAsync(p => (int?)p.Stock, cancellationToken) ?? 0,
+            await productosBase.CountAsync(
+                p => p.Stock > 0 && p.Stock <= UmbralStockBajo,
+                cancellationToken));
+
+        var consulta = productosBase.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(busqueda))
+        {
+            var termino = busqueda.Trim();
+            consulta = consulta.Where(p => p.Nombre.Contains(termino) || p.Sku.Contains(termino));
+        }
+        if (categoriaId is int idCategoria)
+        {
+            consulta = consulta.Where(p => p.CategoriaId == idCategoria);
+        }
+
+        switch (estado.Trim().ToLowerInvariant())
+        {
+            case "todos":
+                break;
+            case "disponible":
+                consulta = consulta.Where(p => p.Stock > UmbralStockBajo);
+                break;
+            case "stock-bajo":
+                consulta = consulta.Where(p => p.Stock > 0 && p.Stock <= UmbralStockBajo);
+                break;
+            case "sin-stock":
+                consulta = consulta.Where(p => p.Stock == 0);
+                break;
+            default:
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Estado inválido",
+                    Detail = "Usa todos, disponible, stock-bajo o sin-stock."
+                });
+        }
+
+        var total = await consulta.CountAsync(cancellationToken);
+        var productos = await consulta
+            .OrderBy(p => p.Nombre)
+            .ThenBy(p => p.Sku)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .Select(p => new ProductoInventarioDto(
+                p.Id,
+                p.Sku,
+                p.Nombre,
+                p.CategoriaId,
+                p.Categoria == null ? "Sin categoría" : p.Categoria.Nombre,
+                p.Precio,
+                p.Stock,
+                p.UrlImagen))
+            .ToListAsync(cancellationToken);
+
+        var categorias = await _context.Categorias.AsNoTracking()
+            .OrderBy(c => c.Nombre)
+            .Select(c => new CategoriaInventarioDto(c.Id, c.Nombre))
+            .ToListAsync(cancellationToken);
+
+        return Ok(new ListadoInventarioProductosDto(
+            productos,
+            categorias,
+            resumen,
+            pagina,
+            tamanoPagina,
+            total));
     }
 
     [HttpPost]

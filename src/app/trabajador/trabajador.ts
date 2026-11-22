@@ -12,6 +12,9 @@ import { AuthService } from '../core/auth/auth.service';
       <p>Bienvenido: {{ auth.user()?.nombreCompleto }}</p>
       <p>Rol: {{ auth.role() }}</p>
       <div style="margin-bottom: 20px;">
+        <a routerLink="/trabajador/inventario">Gestionar inventario</a>
+      </div>
+      <div style="margin-bottom: 20px;">
         <a routerLink="/trabajador/registrar-cliente">Registrar cliente</a>
       </div>
       <button (click)="auth.logout()">Cerrar sesión</button>
