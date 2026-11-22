@@ -19,6 +19,8 @@ export class TrabajadoresLista implements OnInit {
   trabajadores = signal<TrabajadorDto[]>([]);
   loading = signal(false);
   errorMessage = signal<string | null>(null);
+  errorAccion = signal<string | null>(null);
+  cambiandoEstadoId = signal<number | null>(null);
   filtro = signal('');
 
   // Busca por RUT, nombre o correo. Cada palabra escrita debe aparecer en algún
@@ -55,6 +57,29 @@ export class TrabajadoresLista implements OnInit {
 
   onFiltro(event: Event) {
     this.filtro.set((event.target as HTMLInputElement).value);
+  }
+
+  cambiarEstado(trabajador: TrabajadorDto) {
+    const accion = trabajador.activo ? 'deshabilitar' : 'habilitar';
+    if (!window.confirm(`¿Estás seguro de que deseas ${accion} al trabajador ${trabajador.nombres}?`)) {
+      return;
+    }
+
+    this.errorAccion.set(null);
+    this.cambiandoEstadoId.set(trabajador.id);
+
+    this.service.cambiarEstado(trabajador.id, !trabajador.activo).subscribe({
+      next: () => {
+        this.trabajadores.update(lista => 
+          lista.map(t => t.id === trabajador.id ? { ...t, activo: !t.activo } : t)
+        );
+        this.cambiandoEstadoId.set(null);
+      },
+      error: (msg) => {
+        this.errorAccion.set(msg);
+        this.cambiandoEstadoId.set(null);
+      }
+    });
   }
 
   private normalizar(texto: string): string {

@@ -30,6 +30,19 @@
   text-decoration: underline;
 }
 
+.btn-nuevo {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #2ecc71;
+  color: white !important;
+  border-radius: 4px;
+}
+
+.btn-nuevo:hover {
+  background: #27ae60;
+  text-decoration: none !important;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -121,6 +134,36 @@ tbody tr:hover {
 .badge-deshabilitado {
   background: #fdecea;
   color: #b03a2e;
+}
+
+.action-link {
+  color: #3498db;
+  text-decoration: none;
+  margin-right: 10px;
+  font-size: 0.9rem;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.btn-estado {
+  padding: 4px 8px;
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-estado:hover:not(:disabled) {
+  background: #d68910;
+}
+
+.btn-estado:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
 }
 
 /* Texto solo para lectores de pantalla */

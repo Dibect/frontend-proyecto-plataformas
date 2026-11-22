@@ -2,7 +2,10 @@ import { Routes } from '@angular/router';
 import { authGuard, roleGuard, guestGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+    {
+    path: '',
+    loadComponent: () => import('./home/home').then((m) => m.Home),
+  },
   {
     path: 'login',
     loadComponent: () => import('./login/login').then((m) => m.Login),
@@ -39,6 +42,20 @@ export const routes: Routes = [
       import('./admin/trabajadores/trabajadores-lista').then((m) => m.TrabajadoresLista),
     canActivate: [authGuard, roleGuard],
     data: { roles: ['Administrador'] },
+  },
+  {
+    path: 'admin/trabajadores/nuevo',
+    loadComponent: () =>
+      import('./admin/trabajadores/trabajador-form/trabajador-form').then((m) => m.TrabajadorForm),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'], modo: 'crear' },
+  },
+  {
+    path: 'admin/trabajadores/:id/editar',
+    loadComponent: () =>
+      import('./admin/trabajadores/trabajador-form/trabajador-form').then((m) => m.TrabajadorForm),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Administrador'], modo: 'editar' },
   },
   {
     path: 'trabajador',

@@ -1,1 +1,14 @@
-<p>admin works!</p>
+<main class="lista-container">
+  <header class="lista-header">
+    <h2>Panel de Administración</h2>
+    <button type="button" class="btn-logout" (click)="auth.logout()">Cerrar sesión</button>
+  </header>
+
+  <p>Bienvenido: {{ auth.user()?.nombreCompleto }}</p>
+  <p>Rol: {{ auth.role() }}</p>
+  
+  <div class="toolbar" style="margin-top: 20px;">
+    <a routerLink="/admin/trabajadores" class="btn-link">Gestionar trabajadores</a>
+    <a routerLink="/admin/trabajadores/nuevo" class="btn-link">Nuevo trabajador</a>
+  </div>
+</main>
