@@ -58,7 +58,8 @@ export class Login implements OnInit {
       next: () => {
         const rol = this.auth.role();
         if (rol && ROLE_HOME[rol]) {
-          this.router.navigate([ROLE_HOME[rol]]);
+          const destino = rol === 'Cliente' ? '/' : ROLE_HOME[rol];
+          this.router.navigate([destino]);
         } else {
           this.auth.logout();
           this.loading.set(false);

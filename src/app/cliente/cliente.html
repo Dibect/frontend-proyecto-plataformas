@@ -1,0 +1,40 @@
+<div class="profile-page">
+  <header class="profile-header">
+    <a routerLink="/" class="brand" aria-label="Volver al inicio">
+      <span class="brand-badge">d</span>
+      <span class="brand-name">dumbo</span>
+    </a>
+    <a routerLink="/" class="back-link">&larr; Volver a la tienda</a>
+  </header>
+
+  <main class="profile-main">
+    <section class="profile-card">
+      <div class="profile-top">
+        <div class="avatar" aria-hidden="true">{{ iniciales() }}</div>
+        <div class="profile-info">
+          <span class="role-badge">{{ auth.role() }}</span>
+          <h1>{{ auth.user()?.nombreCompleto }}</h1>
+          @if (auth.user()?.correo) {
+            <p class="profile-email">{{ auth.user()?.correo }}</p>
+          }
+        </div>
+        <button type="button" class="btn-logout" (click)="cerrarSesion()">
+          Cerrar sesión
+        </button>
+      </div>
+    </section>
+
+    <section class="orders-card">
+      <div class="orders-header">
+        <h2>Mis pedidos</h2>
+      </div>
+      <div class="orders-empty">
+        <p class="orders-empty-title">Aún no tienes compras registradas</p>
+        <p class="orders-empty-sub">
+          Explora el catálogo de Dumbo Supermercados y recibe tus productos en casa.
+        </p>
+        <a routerLink="/" class="btn-shop">Ir a comprar &rarr;</a>
+      </div>
+    </section>
+  </main>
+</div>

@@ -1,0 +1,205 @@
+:host {
+  --verde-oscuro: #133928;
+  --verde-oscuro-hover: #0d2a1d;
+  --verde-lima: #d6f166;
+  --fondo-suave: #edf2ea;
+  --texto-secundario: #526158;
+  --borde-suave: #e2e8e3;
+  display: block;
+}
+
+.profile-page {
+  min-height: 100vh;
+  background-color: var(--fondo-suave);
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-header {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: var(--verde-oscuro);
+}
+
+.brand-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background-color: var(--verde-lima);
+  color: var(--verde-oscuro);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.brand-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.back-link {
+  text-decoration: none;
+  color: var(--verde-oscuro);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.profile-main {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-card,
+.orders-card {
+  background-color: #ffffff;
+  border: 1px solid var(--borde-suave);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 12px 32px rgba(19, 57, 40, 0.05);
+}
+
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--verde-oscuro);
+  color: var(--verde-lima);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background-color: #eaf7ee;
+  color: var(--verde-oscuro);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.profile-info h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--verde-oscuro);
+}
+
+.profile-email {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--texto-secundario);
+}
+
+.btn-logout {
+  padding: 0.65rem 1.15rem;
+  border-radius: 8px;
+  border: 1px solid #f0c2c2;
+  background-color: #fff5f5;
+  color: #b42318;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-logout:hover {
+  background-color: #fde8e8;
+}
+
+.orders-header h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.15rem;
+  color: var(--verde-oscuro);
+}
+
+.orders-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  border: 1px dashed #cfd8d1;
+  border-radius: 12px;
+  background-color: #fafcfa;
+}
+
+.orders-empty-title {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--verde-oscuro);
+}
+
+.orders-empty-sub {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  color: var(--texto-secundario);
+}
+
+.btn-shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 8px;
+  background-color: var(--verde-oscuro);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.btn-shop:hover {
+  background-color: var(--verde-oscuro-hover);
+}
+
+@media (max-width: 600px) {
+  .profile-header,
+  .profile-main {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .btn-logout {
+    width: 100%;
+  }
+}
