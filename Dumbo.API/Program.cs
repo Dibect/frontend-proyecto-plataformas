@@ -2,6 +2,7 @@ using Dumbo.API.Data;
 using Dumbo.API.Data.Seed;
 using Dumbo.API.Repositories;
 using Dumbo.API.Middleware;
+using Dumbo.API.Services.Productos;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<ImportadorCsvProductos>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

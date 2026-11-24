@@ -1,0 +1,256 @@
+<div class="inventory-shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/trabajador" aria-label="Dumbo, panel de trabajador">
+      <span class="brand-mark">d</span>
+      <span>dumbo</span>
+    </a>
+
+    <nav class="sidebar-nav" aria-label="Navegación de trabajador">
+      <a class="nav-link" routerLink="/trabajador">
+        <span class="nav-icon">⌂</span><span>Resumen</span>
+      </a>
+      <a class="nav-link nav-link--active" routerLink="/trabajador/inventario" aria-current="page">
+        <span class="nav-icon">◇</span><span>Inventario</span>
+      </a>
+      <span class="nav-link nav-link--disabled" aria-disabled="true">
+        <span class="nav-icon">▣</span><span>Ventas</span>
+      </span>
+      <a class="nav-link" routerLink="/trabajador/registrar-cliente">
+        <span class="nav-icon">♙</span><span>Registrar cliente</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="avatar">{{ (auth.user()?.nombreCompleto || 'T').slice(0, 1).toUpperCase() }}</div>
+      <div class="sidebar-user-copy">
+        <strong>{{ auth.user()?.nombreCompleto || 'Trabajador' }}</strong>
+        <span>{{ auth.role() || 'Trabajador' }}</span>
+      </div>
+      <button class="logout-button" type="button" (click)="auth.logout()" aria-label="Cerrar sesión">
+        ↗
+      </button>
+    </div>
+  </aside>
+
+  <main class="inventory-main">
+    <div class="topbar">
+      <div class="breadcrumb"><span>Operaciones</span><span class="breadcrumb-separator">/</span><strong>Inventario</strong></div>
+      <div class="profile-pill"><span class="profile-icon">♙</span>{{ auth.user()?.nombreCompleto || 'Trabajador' }}</div>
+    </div>
+
+    <section class="page-content">
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">GESTIÓN DE PRODUCTOS</p>
+          <h1>Inventario</h1>
+          <p class="page-subtitle">Controla tus productos, precios y disponibilidad.</p>
+        </div>
+        <div class="heading-actions">
+          <button class="button button--secondary" type="button" (click)="descargarPlantilla()">
+            <span aria-hidden="true">↓</span> Plantilla CSV
+          </button>
+          <button class="button button--secondary" type="button" (click)="abrirFormulario()">
+            <span aria-hidden="true">＋</span> Nuevo producto
+          </button>
+        </div>
+      </header>
+
+      @if (error()) {
+        <div class="notice notice--error" role="alert">
+          <span>{{ error() }}</span>
+          <button type="button" (click)="error.set(null)" aria-label="Cerrar mensaje">×</button>
+        </div>
+      }
+      @if (mensaje()) {
+        <div class="notice notice--success" role="status">
+          <span>{{ mensaje() }}</span>
+          <button type="button" (click)="mensaje.set(null)" aria-label="Cerrar mensaje">×</button>
+        </div>
+      }
+
+      <section class="summary-grid" aria-label="Resumen de inventario">
+        <article class="summary-card">
+          <div class="summary-icon summary-icon--mint">◇</div>
+          <div><span>Productos registrados</span><strong>{{ listado()?.resumen?.totalProductos ?? '—' }}</strong><small>En el inventario</small></div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-icon summary-icon--green">✓</div>
+          <div><span>Unidades en stock</span><strong>{{ listado()?.resumen?.unidadesEnStock ?? '—' }}</strong><small>Actualizado ahora</small></div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-icon summary-icon--amber">↓</div>
+          <div><span>Stock bajo</span><strong>{{ listado()?.resumen?.productosStockBajo ?? '—' }}</strong><small>10 unidades o menos</small></div>
+        </article>
+      </section>
+
+      <section class="inventory-card" aria-label="Productos del inventario">
+        <div class="filter-bar">
+          <label class="search-field">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" [value]="busqueda()" (input)="buscar($event)" placeholder="Buscar por nombre o SKU…" aria-label="Buscar productos" />
+          </label>
+          <label class="select-field">
+            <span class="sr-only">Filtrar por categoría</span>
+            <select (change)="cambiarCategoria($event)">
+              <option value="">Todas las categorías</option>
+              @for (categoria of listado()?.categorias ?? []; track categoria.id) {
+                <option [value]="categoria.id" [selected]="categoria.id === categoriaId()">{{ categoria.nombre }}</option>
+              }
+            </select>
+            <span aria-hidden="true">⌄</span>
+          </label>
+          <label class="select-field select-field--status">
+            <span class="sr-only">Filtrar por estado</span>
+            <select [value]="estado()" (change)="cambiarEstado($event)">
+              <option value="todos">Estado: todos</option>
+              <option value="disponible">Disponible</option>
+              <option value="stock-bajo">Stock bajo</option>
+              <option value="sin-stock">Sin stock</option>
+            </select>
+            <span aria-hidden="true">⌄</span>
+          </label>
+          <span class="result-count">{{ listado()?.total ?? 0 }} productos</span>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Producto</th><th>SKU</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+              @if (cargando() && !listado()) {
+                <tr><td class="table-message" colspan="6">Cargando inventario…</td></tr>
+              } @else if ((listado()?.productos?.length ?? 0) === 0) {
+                <tr><td class="table-message" colspan="6">{{ cargando() ? 'Actualizando inventario…' : 'No hay productos para mostrar.' }}</td></tr>
+              } @else {
+                @for (producto of listado()?.productos ?? []; track producto.id) {
+                  <tr>
+                    <td>
+                      <div class="product-cell">
+                        @if (producto.urlImagen) {
+                          <img class="product-image" [src]="producto.urlImagen" [alt]="producto.nombre" />
+                        } @else {
+                          <span class="product-image product-image--placeholder">{{ producto.nombre.slice(0, 1).toUpperCase() }}</span>
+                        }
+                        <strong>{{ producto.nombre }}</strong>
+                      </div>
+                    </td>
+                    <td class="muted-cell">{{ producto.sku }}</td>
+                    <td class="muted-cell">{{ producto.categoriaNombre }}</td>
+                    <td class="price-cell">{{ formatoPrecio(producto.precio) }}</td>
+                    <td><span class="stock-value">{{ producto.stock }}</span></td>
+                    <td><span class="status-pill" [class]="'status-pill ' + claseEstado(producto.stock)"><span></span>{{ estadoProducto(producto.stock) }}</span></td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="table-footer">
+          <span>Mostrando {{ inicioRango() }}–{{ finRango() }} de {{ listado()?.total ?? 0 }} productos</span>
+          <div class="pagination" aria-label="Paginación de productos">
+            <button type="button" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() <= 1 || cargando()">Anterior</button>
+            <span class="page-current">{{ pagina() }}</span>
+            <button type="button" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() >= cantidadPaginas() || cargando()">Siguiente</button>
+          </div>
+        </footer>
+      </section>
+
+      <section class="upload-card" aria-label="Carga masiva de productos">
+        <div class="upload-symbol">↑</div>
+        <div class="upload-copy">
+          <strong>Carga masiva de productos</strong>
+          <span>Sube un archivo CSV de hasta 5 MB para agregar productos al inventario.</span>
+        </div>
+        <div class="upload-actions">
+          <label class="button button--outline" [class.button--busy]="importando()">
+            {{ importando() ? 'Importando…' : 'Seleccionar archivo' }}
+            <input type="file" accept=".csv,text/csv" (change)="seleccionarCsv($event)" [disabled]="importando()" />
+          </label>
+          <button class="template-link" type="button" (click)="descargarPlantilla()"><span aria-hidden="true">↓</span> Descargar plantilla</button>
+        </div>
+      </section>
+
+      @if (resultadoImportacion(); as resultado) {
+        <section class="import-result" aria-live="polite">
+          <div class="import-result-heading">
+            <div><p class="eyebrow">RESULTADO DE CARGA</p><h2>Importación CSV</h2></div>
+            <span>{{ resultado.filasLeidas }} filas revisadas</span>
+          </div>
+          <div class="import-counts">
+            <span><strong>{{ resultado.productosImportados }}</strong> agregados</span>
+            <span><strong>{{ resultado.filasRechazadas }}</strong> con errores</span>
+          </div>
+          @if (resultado.errores.length > 0) {
+            <ul class="import-errors">
+              @for (detalle of resultado.errores; track detalle.fila + detalle.mensaje) {
+                <li><strong>Fila {{ detalle.fila }}:</strong> {{ detalle.mensaje }}</li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </section>
+  </main>
+</div>
+
+@if (modalProductoAbierto()) {
+  <div class="modal-backdrop" (click)="cerrarFormulario()">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div><p class="eyebrow">INVENTARIO</p><h2 id="product-modal-title">Nuevo producto</h2><p>Completa la información para agregarlo al inventario.</p></div>
+        <button class="modal-close" type="button" (click)="cerrarFormulario()" aria-label="Cerrar">×</button>
+      </header>
+      <form class="product-form" (submit)="solicitarConfirmacionProducto($event)">
+        <label>SKU <input required maxlength="50" [value]="formulario().sku" (input)="actualizarCampo('sku', $event)" /></label>
+        <label>Nombre <input required maxlength="200" [value]="formulario().nombre" (input)="actualizarCampo('nombre', $event)" /></label>
+        <label class="form-span">Descripción <textarea required maxlength="1000" rows="3" [value]="formulario().descripcion" (input)="actualizarCampo('descripcion', $event)"></textarea></label>
+        <label>Precio <input required type="number" min="0" step="1" [value]="formulario().precio" (input)="actualizarCampo('precio', $event)" /></label>
+        <label>Stock inicial <input required type="number" min="0" step="1" [value]="formulario().stock" (input)="actualizarCampo('stock', $event)" /></label>
+        <label>Categoría
+          <select [value]="formulario().categoriaId" (change)="actualizarCampo('categoriaId', $event)">
+            <option value="">Sin categoría</option>
+            @for (categoria of listado()?.categorias ?? []; track categoria.id) { <option [value]="categoria.id">{{ categoria.nombre }}</option> }
+          </select>
+        </label>
+        <label>Presentación <input maxlength="50" placeholder="Ej. 1 kg" [value]="formulario().presentacion" (input)="actualizarCampo('presentacion', $event)" /></label>
+        <label class="form-span">URL de imagen <input type="url" maxlength="500" [value]="formulario().urlImagen" (input)="actualizarCampo('urlImagen', $event)" /></label>
+        <label>Precio anterior <input type="number" min="0" step="1" [value]="formulario().precioAnterior" (input)="actualizarCampo('precioAnterior', $event)" /></label>
+        <div class="form-actions form-span">
+          <button class="button button--secondary" type="button" (click)="cerrarFormulario()">Cancelar</button>
+          <button class="button button--primary" type="submit">Revisar producto</button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (confirmarProductoAbierto()) {
+  <div class="modal-backdrop modal-backdrop--top">
+    <section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-product-title">
+      <div class="confirm-icon">✓</div>
+      <h2 id="confirm-product-title">¿Agregar este producto?</h2>
+      <p>Se registrará <strong>{{ formulario().nombre }}</strong> con SKU <strong>{{ formulario().sku }}</strong> y stock inicial de <strong>{{ formulario().stock }}</strong> unidades.</p>
+      @if (error()) { <p class="confirm-error" role="alert">{{ error() }}</p> }
+      <div class="form-actions">
+        <button class="button button--secondary" type="button" (click)="confirmarProductoAbierto.set(false)" [disabled]="guardando()">Volver</button>
+        <button class="button button--primary" type="button" (click)="confirmarCreacion()" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Confirmar registro' }}</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (confirmarCsvAbierto()) {
+  <div class="modal-backdrop">
+    <section class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-csv-title">
+      <div class="confirm-icon confirm-icon--upload">↑</div>
+      <h2 id="confirm-csv-title">¿Importar este archivo?</h2>
+      <p>Se revisará <strong>{{ archivoPendiente()?.name }}</strong>. Las filas válidas se agregarán y las que tengan errores se informarán al terminar.</p>
+      <div class="form-actions">
+        <button class="button button--secondary" type="button" (click)="cancelarImportacion()" [disabled]="importando()">Cancelar</button>
+        <button class="button button--primary" type="button" (click)="confirmarImportacion()" [disabled]="importando()">{{ importando() ? 'Importando…' : 'Confirmar importación' }}</button>
+      </div>
+    </section>
+  </div>
+}

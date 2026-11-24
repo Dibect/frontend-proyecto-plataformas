@@ -64,6 +64,13 @@ export const routes: Routes = [
     data: { roles: ['Trabajador'] },
   },
   {
+    path: 'trabajador/inventario',
+    loadComponent: () =>
+      import('./trabajador/inventario/inventario').then((m) => m.Inventario),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Trabajador'] },
+  },
+  {
     path: 'trabajador/registrar-cliente',
     loadComponent: () => import('./register/register').then((m) => m.Register),
     canActivate: [authGuard, roleGuard],
